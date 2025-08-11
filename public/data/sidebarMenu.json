@@ -1,0 +1,21 @@
+[
+    {
+        "title": "General PCR",
+        "icon": "",
+        "children": [
+            {
+                "title": "Case Reg",
+                "icon": "",
+                "path": "/"
+            },
+            {
+                "title": "Case List",
+                "icon": "",
+                "path": "/"
+            }
+
+        ]
+
+    }
+]
+

@@ -1,0 +1,41 @@
+{
+    "menus": [
+        {
+            "id": "1",
+            "title": "Home",
+            "path": "/",
+            "dropdown": []
+        },
+        {
+            "id": "2",
+            "title": "Kurties",
+            "path": "/whoweare",
+            "dropdown": []
+        },
+        {
+            "id": "3",
+            "title": "Two Pieces",
+            "path": "/about"
+        },
+        {
+            "id": "4",
+            "title": "Stitch Three pieces",
+            "path": "/contacts/create"
+        },
+        {
+            "id": "5",
+            "title": "Exclusive Boutiques three pieces",
+            "path": "/contacts/create"
+        },
+        {
+            "id": "6",
+            "title": "Orna",
+            "path": "/contacts/create"
+        },
+        {
+            "id": "7",
+            "title": "Salwar",
+            "path": "/contacts/create"
+        }
+    ]
+}

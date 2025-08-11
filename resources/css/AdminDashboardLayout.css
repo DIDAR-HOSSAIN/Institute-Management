@@ -1,0 +1,20 @@
+
+
+/* dashboardLayout.css */
+
+/* Default styles for larger devices */
+.flex-container {
+  display: flex;
+}
+
+/* Styles for small devices (e.g., mobile phones) */
+@media (max-width: 768px) {
+  /* Hide the toggle button on small devices */
+  .flex-container .toggle-button {
+    display: none;
+  }
+
+  /* Additional styles for small devices */
+  /* ... */
+}
+

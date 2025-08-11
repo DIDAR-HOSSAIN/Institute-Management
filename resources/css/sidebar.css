@@ -1,0 +1,11 @@
+.collapsed {
+    width: 0;
+    overflow: hidden;
+    transition: width 0.3s ease;
+}
+
+.sidebar-collapsed .lg\:w-64 {
+    width: 0;
+    overflow: hidden;
+    transition: width 0.3s ease;
+}
