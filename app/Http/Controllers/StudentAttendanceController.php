@@ -149,34 +149,37 @@ class StudentAttendanceController extends Controller
 
         // Step 1: Device connection test
         if (!$zk->connect()) {
-            dd('❌ Unable to connect to device at ' . $machineId);
+            echo "❌ Unable to connect to device at {$machineId}\n";
+            return;
         }
-        dd('✅ Connected to device: ' . $machineId);
+        echo "✅ Connected to device: {$machineId}\n";
 
         // Step 2: Pull attendance data from device
         $data = $zk->getAttendance();
 
         if (empty($data)) {
-            dd('⚠ No attendance data found from device.');
+            echo "⚠ No attendance data found from device.\n";
+            return;
         }
 
-        // Show raw attendance data
-        dd($data);
+        echo "📥 Total records pulled: " . count($data) . "\n";
 
         // Step 3: Process each entry
         foreach ($data as $entry) {
-            dd($entry); // Debug each entry before saving
+            echo "➡ Processing User ID: {$entry['id']} | Time: {$entry['timestamp']}\n";
 
             $date = date('Y-m-d', strtotime($entry['timestamp']));
             $time = date('H:i:s', strtotime($entry['timestamp']));
 
             // Skip Friday
             if (date('l', strtotime($date)) === 'Friday') {
+                echo "⏩ Skipped (Friday)\n";
                 continue;
             }
 
             // Skip holiday
             if (\App\Models\Holiday::where('date', $date)->exists()) {
+                echo "⏩ Skipped (Holiday)\n";
                 continue;
             }
 
@@ -196,6 +199,7 @@ class StudentAttendanceController extends Controller
                     'status'            => 'Present',
                     'source'            => 'device',
                 ]);
+                echo "✅ New attendance saved for user {$entry['id']} on {$date}\n";
             } else {
                 if ($attendance->in_time === null || strtotime($time) < strtotime($attendance->in_time)) {
                     $attendance->in_time = $time;
@@ -205,12 +209,13 @@ class StudentAttendanceController extends Controller
                 }
                 $attendance->device_ip = $machineId;
                 $attendance->save();
+
+                echo "🔄 Attendance updated for user {$entry['id']} on {$date}\n";
             }
         }
 
         $zk->disconnect();
-
-        return back()->with('success', 'Attendance synced successfully.');
+        echo "🎉 Attendance sync completed.\n";
     }
 
 }

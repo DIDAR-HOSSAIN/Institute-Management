@@ -12,7 +12,7 @@ class Kernel extends ConsoleKernel
      */
 protected function schedule(Schedule $schedule)
 {
-    $schedule->command('attendance:sync')->everyMinute();
+    $schedule->command('student-attendance:sync')->everyMinute();
 }
 
 protected function commands()

@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\StudentAttendanceController;
 use Illuminate\Console\Command;
 
 class SyncAttendance extends Command
@@ -12,13 +12,14 @@ class SyncAttendance extends Command
      *
      * @var string
      */
-    protected $signature = 'attendance:sync';
-    protected $description = 'Sync attendance from ZKTeco device';
+    
+    protected $signature = 'student-attendance:sync';
+    protected $description = 'Sync student attendance from ZKTeco device';
 
     public function handle()
     {
-        $controller = new AttendanceController();
+        $controller = new StudentAttendanceController();
         $controller->sync();
-        $this->info('Attendance synced successfully.');
+        $this->info('🎓 Student attendance synced successfully.');
     }
 }
