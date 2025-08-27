@@ -14,11 +14,12 @@ return new class extends Migration
         Schema::create('students', function (Blueprint $table) {
             $table->id();
             $table->string('student_name');
-            $table->string('roll_number')->unique();
-            $table->string('class_id');
-            $table->string('section_id');
+            $table->integer('roll_number')->unique();
+            $table->unsignedBigInteger('school_class_id')->nullable();
+            $table->unsignedBigInteger('section_id')->nullable();
+            $table->integer('machine_user_id')->nullable();
             $table->date('dob')->nullable();
-            $table->date('academic_year')->nullable();
+            $table->string('academic_year')->nullable();
             $table->string('gender')->nullable();
             $table->integer('contact_no')->nullable();
             $table->string('address')->nullable();

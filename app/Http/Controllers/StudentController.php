@@ -17,10 +17,10 @@ class StudentController extends Controller
      */
     public function index()
     {
+        $students = Student::with(['schoolClass', 'section'])->latest()->get();
+
         return Inertia::render('Institute-Managements/Students/ViewStudents', [
-            'students' => Student::with(['class', 'section'])->latest()->get(),
-            'classes' => SchoolClass::all(),
-            'sections' => Section::all(),
+            'students' => $students
         ]);
     }
 
@@ -29,8 +29,8 @@ class StudentController extends Controller
      */
     public function create()
     {
-
-        return Inertia::render('Institute-Managements/Students/CreateStudent');
+        $classes = SchoolClass::with('sections')->get();
+        return Inertia::render('Institute-Managements/Students/CreateStudent', compact('classes'));
     }
 
     /**
@@ -39,15 +39,15 @@ class StudentController extends Controller
     public function store(StoreStudentRequest $request)
     {
         $validator = Validator::make($request->all(), [
-            'student_name' => 'required|string|max:255',
-            'roll_number' => 'required|string|max:50|unique:students,roll_number',
-            'class_id'     => 'required|exists:school_classes,id',
-            'section_id'   => 'required|exists:sections,id',
-            'dob'          => 'nullable|date',
+            'student_name'  => 'required|string|max:255',
+            'roll_number'   => 'required|string|max:50|unique:students,roll_number',
+            'school_class_id' => 'required|exists:school_classes,id',
+            'section_id'    => 'required|exists:sections,id',
+            'dob'           => 'nullable|date',
             'academic_year' => 'nullable|string',
-            'gender'       => 'nullable|string',
-            'contact_no'   => 'nullable|string',
-            'address'      => 'nullable|string'
+            'gender'        => 'nullable|string',
+            'contact_no'    => 'nullable|string',
+            'address'       => 'nullable|string'
         ]);
 
         if ($validator->fails()) {
@@ -74,7 +74,16 @@ class StudentController extends Controller
      */
     public function edit(Student $student)
     {
-        //
+        // classes with sections so edit form can populate section dropdown
+        $classes = SchoolClass::with('sections')->get();
+
+        // make sure student relation loaded
+        $student->load('schoolClass', 'section');
+
+        return Inertia::render('Institute-Managements/Students/EditStudent', [
+            'student' => $student,
+            'classes' => $classes
+        ]);
     }
 
     /**
@@ -82,7 +91,8 @@ class StudentController extends Controller
      */
     public function update(UpdateStudentRequest $request, Student $student)
     {
-        //
+        $student->update($request->validated());
+        return redirect()->route('students.index')->with('success', 'Student updated');
     }
 
     /**
@@ -90,6 +100,7 @@ class StudentController extends Controller
      */
     public function destroy(Student $student)
     {
-        //
+        $student->delete();
+        return redirect()->route('students.index')->with('success', 'Student deleted.');
     }
 }

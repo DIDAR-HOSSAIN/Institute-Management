@@ -13,11 +13,14 @@ return new class extends Migration
     {
         Schema::create('student_attendances', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('student_id');
+            $table->unsignedBigInteger('student_id')->nullable();
+            $table->unsignedBigInteger('class_schedule_id')->nullable();
+            $table->integer('user_id')->nullable();
             $table->date('date');
             $table->time('in_time');
             $table->time('out_time');
-            $table->string('status')->default('Present');
+            $table->enum('status', ['Present', 'Absent', 'Late', 'Holiday'])->default('Absent');
+            $table->string('device_ip')->nullable();
             $table->string('source')->default('device');
             $table->timestamps();
         });

@@ -8,4 +8,16 @@ use Illuminate\Database\Eloquent\Model;
 class SchoolClass extends Model
 {
     use HasFactory;
+
+    protected $fillable = ['class_name'];
+
+    public function sections()
+    {
+        return $this->hasMany(Section::class);
+    }
+
+    public function schedules()
+    {
+        return $this->hasMany(ClassSchedule::class);
+    }
 }

@@ -1,11 +1,12 @@
-import { useForm } from '@inertiajs/react';
-import React from 'react';
+import React, { useState } from "react";
+import { useForm, usePage, Link } from "@inertiajs/react";
 
-const CreateStudent = () => {
-    const { data, setData, post, processing, errors } = useForm({
+export default function Create() {
+    const { classes } = usePage().props;
+    const { data, setData, post, processing, errors, reset } = useForm({
         student_name: '',
         roll_number: '',
-        class_id: '',
+        school_class_id: '',
         section_id: '',
         dob: '',
         academic_year: '',
@@ -14,44 +15,89 @@ const CreateStudent = () => {
         address: ''
     });
 
+    const [sections, setSections] = useState([]);
+
+    function onClassChange(e) {
+        const id = e.target.value;
+        setData('school_class_id', id);
+        setData('section_id', '');
+        const cls = classes.find(c => c.id == id);
+        setSections(cls ? cls.sections : []);
+    }
+
     function submit(e) {
         e.preventDefault();
-        post('/students');
+        post(route('students.store'), { onSuccess: () => reset() });
     }
+
     return (
-        <div className="max-w-xl mx-auto bg-white p-6 rounded shadow">
+        <div className="max-w-3xl mx-auto p-4 bg-white rounded shadow">
             <h1 className="text-xl font-bold mb-4">Add Student</h1>
-            <form onSubmit={submit} className="space-y-4">
-                <input type="text" placeholder="Student Name" value={data.student_name} onChange={e => setData('student_name', e.target.value)} className="w-full border p-2 rounded" />
-                {errors.student_name && <div className="text-red-500">{errors.student_name}</div>}
+            <form onSubmit={submit} className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                    <label className="block mb-1">Name</label>
+                    <input value={data.student_name} onChange={e => setData('student_name', e.target.value)} className="w-full border p-2 rounded" />
+                    {errors.student_name && <div className="text-red-600">{errors.student_name}</div>}
+                </div>
 
-                <input type="text" placeholder="Roll Number" value={data.roll_number} onChange={e => setData('roll_number', e.target.value)} className="w-full border p-2 rounded" />
-                {errors.roll_number && <div className="text-red-500">{errors.roll_number}</div>}
+                <div>
+                    <label className="block mb-1">Roll Number</label>
+                    <input type="number" value={data.roll_number} onChange={e => setData('roll_number', e.target.value)} className="w-full border p-2 rounded" />
+                    {errors.roll_number && <div className="text-red-600">{errors.roll_number}</div>}
+                </div>
 
-                <input type="number" placeholder="Class ID" value={data.class_id} onChange={e => setData('class_id', e.target.value)} className="w-full border p-2 rounded" />
+                <div>
+                    <label className="block mb-1">Class</label>
+                    <select value={data.school_class_id} onChange={onClassChange} className="w-full border p-2 rounded">
+                        <option value="">Select Class</option>
+                        {classes.map(c => <option key={c.id} value={c.id}>{c.class_name}</option>)}
+                    </select>
+                    {errors.school_class_id && <div className="text-red-600">{errors.school_class_id}</div>}
+                </div>
 
-                <input type="number" placeholder="Section ID" value={data.section_id} onChange={e => setData('section_id', e.target.value)} className="w-full border p-2 rounded" />
+                <div>
+                    <label className="block mb-1">Section</label>
+                    <select value={data.section_id} onChange={e => setData('section_id', e.target.value)} className="w-full border p-2 rounded" disabled={!sections.length}>
+                        <option value="">Select Section</option>
+                        {sections.map(s => <option key={s.id} value={s.id}>{s.section_name}</option>)}
+                    </select>
+                    {errors.section_id && <div className="text-red-600">{errors.section_id}</div>}
+                </div>
 
-                <input type="date" value={data.dob} onChange={e => setData('dob', e.target.value)} className="w-full border p-2 rounded" />
+                <div>
+                    <label className="block mb-1">DOB</label>
+                    <input type="date" value={data.dob} onChange={e => setData('dob', e.target.value)} className="w-full border p-2 rounded" />
+                </div>
 
-                <input type="text" placeholder="Academic Year" value={data.academic_year} onChange={e => setData('academic_year', e.target.value)} className="w-full border p-2 rounded" />
+                <div>
+                    <label className="block mb-1">Academic Year</label>
+                    <input value={data.academic_year} onChange={e => setData('academic_year', e.target.value)} className="w-full border p-2 rounded" placeholder="e.g. 2024-2025" />
+                </div>
 
-                <select value={data.gender} onChange={e => setData('gender', e.target.value)} className="w-full border p-2 rounded">
-                    <option value="">Select Gender</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                </select>
+                <div>
+                    <label className="block mb-1">Gender</label>
+                    <select value={data.gender} onChange={e => setData('gender', e.target.value)} className="w-full border p-2 rounded">
+                        <option value="">Select</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
 
-                <input type="text" placeholder="Contact No" value={data.contact_no} onChange={e => setData('contact_no', e.target.value)} className="w-full border p-2 rounded" />
+                <div>
+                    <label className="block mb-1">Contact No</label>
+                    <input value={data.contact_no} onChange={e => setData('contact_no', e.target.value)} className="w-full border p-2 rounded" />
+                </div>
 
-                <textarea placeholder="Address" value={data.address} onChange={e => setData('address', e.target.value)} className="w-full border p-2 rounded"></textarea>
+                <div className="md:col-span-2">
+                    <label className="block mb-1">Address</label>
+                    <textarea value={data.address} onChange={e => setData('address', e.target.value)} className="w-full border p-2 rounded" />
+                </div>
 
-                <button type="submit" disabled={processing} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                    Save
-                </button>
+                <div className="md:col-span-2 flex justify-end">
+                    <button disabled={processing} className="bg-indigo-600 text-white px-4 py-2 rounded">Save</button>
+                </div>
             </form>
         </div>
     );
-};
-
-export default CreateStudent;
+}

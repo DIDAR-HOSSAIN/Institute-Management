@@ -1,71 +1,94 @@
-import React, { useState } from 'react';
-import { Head, useForm } from '@inertiajs/react';
+import React from "react";
+import { useForm } from "@inertiajs/react";
 
-const PayrollReport = ({ reportData = [] }) => {
+const PayrollReport = ({ attendances, filters }) => {
     const { data, setData, get } = useForm({
-        date: new Date().toISOString().split('T')[0],
+        start_date: filters.start_date || "",
+        end_date: filters.end_date || "",
+        class_id: filters.class_id || "",
     });
 
-    const [loading, setLoading] = useState(false);
-
-    const handleSubmit = (e) => {
+    const submit = (e) => {
         e.preventDefault();
-        setLoading(true);
-        get('/attendance/report', {
+        get(route("attendance.report"), {
+            preserveState: true,
             preserveScroll: true,
-            data: { date: data.date },
-            onFinish: () => setLoading(false),
         });
     };
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <Head>
-                <title>Attendance Report</title>
-            </Head>
+        <div className="p-4">
+            <h1 className="text-lg font-bold mb-4">Attendance Report</h1>
 
-            <form onSubmit={handleSubmit} className="mb-4">
+            {/* Filters */}
+            <form onSubmit={submit} className="flex gap-2 mb-4">
                 <input
                     type="date"
-                    value={data.date}
-                    onChange={e => setData('date', e.target.value)}
-                    className="border p-2 rounded"
+                    value={data.start_date}
+                    onChange={(e) => setData("start_date", e.target.value)}
+                    className="border px-2 py-1"
                 />
-                <button type="submit" disabled={loading} className="ml-2 px-4 py-2 bg-blue-600 text-white rounded">
-                    {loading ? 'Loading...' : 'Filter'}
+                <input
+                    type="date"
+                    value={data.end_date}
+                    onChange={(e) => setData("end_date", e.target.value)}
+                    className="border px-2 py-1"
+                />
+                <select
+                    value={data.class_id}
+                    onChange={(e) => setData("class_id", e.target.value)}
+                    className="border px-2 py-1"
+                >
+                    <option value="">All Classes</option>
+                    {/* Map your classes here if passed as props */}
+                </select>
+                <button
+                    type="submit"
+                    className="bg-blue-500 text-white px-3 py-1 rounded"
+                >
+                    Filter
                 </button>
             </form>
 
-            <table className="w-full border border-collapse">
-                <thead>
-                    <tr className="bg-gray-100">
-                        <th className="border p-2">Name</th>
-                        <th className="border p-2">Date</th>
-                        <th className="border p-2">In Time</th>
-                        <th className="border p-2">Out Time</th>
-                        <th className="border p-2">Status</th>
-                        <th className="border p-2">Source</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {reportData.map((item, index) => (
-                        <tr key={index}>
-                            <td className="border p-2">{item.name}</td>
-                            <td className="border p-2">{item.date}</td>
-                            <td className="border p-2">{item.in_time}</td>
-                            <td className="border p-2">{item.out_time}</td>
-                            <td className={`border p-2 ${item.status === 'Late' ? 'text-red-500' :
-                                item.status === 'Early Leave' ? 'text-orange-500' :
-                                    item.status === 'Absent' ? 'text-gray-500' :
-                                        'text-green-600'
-                                }`}>
-                                {item.status}
-                            </td>
-                            <td className="border p-2">{item.source}</td>
+            {/* Table */}
+            <div className="overflow-x-auto">
+                <table className="min-w-full border">
+                    <thead>
+                        <tr>
+                            <th className="border px-2 py-1">Date</th>
+                            <th className="border px-2 py-1">Roll</th>
+                            <th className="border px-2 py-1">Name</th>
+                            <th className="border px-2 py-1">Class</th>
+                            <th className="border px-2 py-1">Section</th>
+                            <th className="border px-2 py-1">In Time</th>
+                            <th className="border px-2 py-1">Out Time</th>
+                            <th className="border px-2 py-1">Status</th>
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {attendances.map((row, i) => (
+                            <tr key={i}>
+                                <td className="border px-2 py-1">{row.date}</td>
+                                <td className="border px-2 py-1">
+                                    {row.student?.roll_number || row.user_id}
+                                </td>
+                                <td className="border px-2 py-1">
+                                    {row.student?.student_name || "N/A"}
+                                </td>
+                                <td className="border px-2 py-1">
+                                    {row.student?.school_class?.name || "N/A"}
+                                </td>
+                                <td className="border px-2 py-1">
+                                    {row.student?.section?.name || "N/A"}
+                                </td>
+                                <td className="border px-2 py-1">{row.in_time}</td>
+                                <td className="border px-2 py-1">{row.out_time}</td>
+                                <td className="border px-2 py-1">{row.status}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
 };

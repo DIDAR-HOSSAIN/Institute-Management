@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\SchoolClass;
 use App\Http\Requests\StoreSchoolClassRequest;
 use App\Http\Requests\UpdateSchoolClassRequest;
+use Inertia\Inertia;
 
 class SchoolClassController extends Controller
 {
@@ -13,7 +14,8 @@ class SchoolClassController extends Controller
      */
     public function index()
     {
-        //
+        $classes = SchoolClass::with('sections')->get();
+        return Inertia::render('Institute-Managements/School-Class/ViewSchoolClasses', ['classes' => $classes]);
     }
 
     /**
@@ -21,7 +23,7 @@ class SchoolClassController extends Controller
      */
     public function create()
     {
-        //
+        return Inertia::render('Institute-Managements/School-Class/CreateSchoolClass');
     }
 
     /**
@@ -29,7 +31,13 @@ class SchoolClassController extends Controller
      */
     public function store(StoreSchoolClassRequest $request)
     {
-        //
+        $validated = $request->validate([
+            'class_name' => 'required|string|unique:school_classes,class_name',
+        ]);
+
+        SchoolClass::create($validated);
+
+        return redirect()->route('classes.index')->with('success', 'Class created successfully!');
     }
 
     /**
@@ -61,6 +69,7 @@ class SchoolClassController extends Controller
      */
     public function destroy(SchoolClass $schoolClass)
     {
-        //
+        $schoolClass->delete();
+        return redirect()->back()->with('success', 'Class deleted');
     }
 }

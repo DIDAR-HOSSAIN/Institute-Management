@@ -3,6 +3,7 @@
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\ClassScheduleController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DonorMemberController;
@@ -15,7 +16,10 @@ use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\RosterController;
+use App\Http\Controllers\SchoolClassController;
+use App\Http\Controllers\SectionController;
 use App\Http\Controllers\SliderController;
+use App\Http\Controllers\StudentAttendanceController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -51,15 +55,26 @@ use Inertia\Inertia;
 // Route::get('/check/env', [MikrotikController::class, 'checkEnv']);
 // Route::post('/mikrotik/firewall', MikroTikController::class);
 
-Route::get('/attendance/sync/create', [AttendanceController::class, 'syncCreate']);
-Route::get('/attendance/sync', [AttendanceController::class, 'sync']);
-Route::get('/attendance/report', [AttendanceController::class, 'report'])->name('attendance.report');
-Route::resource('/attendance', AttendanceController::class);
 Route::resource('employees', EmployeeController::class);
 Route::resource('rosters', RosterController::class);
 
 // school management
 Route::resource('students', StudentController::class);
+Route::resource('classes', SchoolClassController::class);
+Route::resource('sections', SectionController::class);
+Route::resource('class-schedule', ClassScheduleController::class);
+Route::resource('/attendance', StudentAttendanceController::class);
+Route::get('/attendance/sync/create', [StudentAttendanceController::class, 'syncCreate']);
+Route::get('/attendance/sync', [StudentAttendanceController::class, 'sync']);
+
+Route::get('/zk-test', function () {
+    $zk = new \MehediJaman\LaravelZkteco\LaravelZkteco('192.168.1.40');
+    if ($zk->connect()) {
+        return "Connected to device!";
+    }
+    return "Failed to connect.";
+});
+
 
 
 
