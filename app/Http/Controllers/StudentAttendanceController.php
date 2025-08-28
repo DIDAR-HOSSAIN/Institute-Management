@@ -13,6 +13,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
+use MehediJaman\LaravelZkteco\LaravelZkteco;
 
 class StudentAttendanceController extends Controller
 {

@@ -64,16 +64,20 @@ Route::resource('classes', SchoolClassController::class);
 Route::resource('sections', SectionController::class);
 Route::resource('class-schedule', ClassScheduleController::class);
 Route::resource('/attendance', StudentAttendanceController::class);
+// Show the page
 Route::get('/attendance/sync/create', [StudentAttendanceController::class, 'syncCreate']);
-Route::get('/attendance/sync', [StudentAttendanceController::class, 'sync']);
 
-Route::get('/zk-test', function () {
-    $zk = new \MehediJaman\LaravelZkteco\LaravelZkteco('192.168.1.40');
-    if ($zk->connect()) {
-        return "Connected to device!";
-    }
-    return "Failed to connect.";
-});
+// Sync device and save to student_attendances table
+Route::get('/attendance/sync', [StudentAttendanceController::class, 'sync'])->name('attendance.sync');
+
+
+// Route::get('/zk-test', function () {
+//     $zk = new \MehediJaman\LaravelZkteco\LaravelZkteco('192.168.1.40');
+//     if ($zk->connect()) {
+//         return "Connected to device!";
+//     }
+//     return "Failed to connect.";
+// });
 
 
 

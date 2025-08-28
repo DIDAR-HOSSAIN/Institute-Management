@@ -11,10 +11,11 @@ const AttendanceSync = () => {
         setLoading(true);
         setStatus(null);
 
-        router.visit('/attendance/sync', {
-            method: 'get',
-            preserveScroll: true,
-            onSuccess: () => {
+        router.get('/attendance/sync', {}, {
+            onSuccess: (page) => {
+                if (page.props.logs) {
+                    console.log(page.props.logs); // সব logs console এ
+                }
                 setStatus({ type: 'success', message: 'Attendance synced successfully!' });
             },
             onError: () => {
@@ -23,6 +24,7 @@ const AttendanceSync = () => {
             onFinish: () => setLoading(false),
         });
     };
+
 
     useEffect(() => {
         // Auto sync every 1 hour
