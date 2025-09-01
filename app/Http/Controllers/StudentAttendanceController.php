@@ -35,10 +35,17 @@ class StudentAttendanceController extends Controller
         $query = StudentAttendance::with([
             'student.schoolClass',
             'student.section',
-            'classSchedule'
+            'classSchedule' => function ($q) use ($filters) {
+                if (!empty($filters['start_date'])) {
+                    $q->whereDate('date', '>=', $filters['start_date']);
+                }
+                if (!empty($filters['end_date'])) {
+                    $q->whereDate('date', '<=', $filters['end_date']);
+                }
+            }
         ]);
 
-        // Apply filters
+        // Apply filters (student/class/section/schedule level)
         if (!empty($filters['school_class_id'])) {
             $query->whereHas('student', function ($q) use ($filters) {
                 $q->where('school_class_id', $filters['school_class_id']);
@@ -55,13 +62,8 @@ class StudentAttendanceController extends Controller
             $query->where('class_schedule_id', $filters['schedule_id']);
         }
 
-        if (!empty($filters['start_date'])) {
-            $query->whereDate('date', '>=', $filters['start_date']);
-        }
-
-        if (!empty($filters['end_date'])) {
-            $query->whereDate('date', '<=', $filters['end_date']);
-        }
+        // এখানে date filter attendances এর উপর না বসিয়ে classSchedule relation এর উপর বসানো হয়েছে
+        // তাই সব attendance আসবে, কিন্তু classSchedule relation তারিখ অনুযায়ী আসবে
 
         // Get paginated attendances
         $attendances = $query->orderBy('date', 'desc')->paginate(20)->withQueryString();
@@ -69,21 +71,25 @@ class StudentAttendanceController extends Controller
         // Summary counts
         $summary = [
             'Present' => (clone $query)->where('status', 'Present')->count(),
-            'Absent' => (clone $query)->where('status', 'Absent')->count(),
-            'Late' => (clone $query)->where('status', 'Late')->count(),
-            'Leave' => (clone $query)->where('status', 'Leave')->count(),
+            'Absent'  => (clone $query)->where('status', 'Absent')->count(),
+            'Late'    => (clone $query)->where('status', 'Late')->count(),
+            'Leave'   => (clone $query)->where('status', 'Leave')->count(),
             'Holiday' => (clone $query)->where('status', 'Holiday')->count(),
         ];
 
         return Inertia::render('Institute-Managements/Student-Attendance/ViewStudentAttendance', [
             'attendances' => $attendances,
-            'classes' => SchoolClass::all(['id', 'class_name']),
-            'sections' => Section::all(['id', 'section_name']),
-            'schedules' => ClassSchedule::all(['id', 'schedule_name']),
+
+            // 👇 ফ্রন্টএন্ডের সাথে match করার জন্য alias করা হলো
+            'classes'   => SchoolClass::all(['id as id', 'class_name as name']),
+            'sections'  => Section::all(['id as id', 'section_name as name']),
+            'schedules' => ClassSchedule::all(['id as id', 'schedule_name as name']),
+
             'filters' => $filters,
             'summary' => $summary,
         ]);
     }
+
 
     /**
      * Show the form for creating a new resource.
@@ -145,78 +151,81 @@ class StudentAttendanceController extends Controller
 
     public function sync()
     {
-        $zk = new \MehediJaman\LaravelZkteco\LaravelZkteco('192.168.1.40');
-        $machineId = '192.168.1.40';
+        $deviceIp = '192.168.1.40';
+        $zk = new \MehediJaman\LaravelZkteco\LaravelZkteco($deviceIp);
 
-        // Step 1: Device connection test
         if (!$zk->connect()) {
-            echo "❌ Unable to connect to device at {$machineId}\n";
-            return;
+            return back()->with('error', 'Unable to connect to device.');
         }
-        echo "✅ Connected to device: {$machineId}\n";
 
-        // Step 2: Pull attendance data from device
         $data = $zk->getAttendance();
 
         if (empty($data)) {
-            echo "⚠ No attendance data found from device.\n";
-            return;
+            return back()->with('error', 'No attendance data found on device.');
         }
 
-        echo "📥 Total records pulled: " . count($data) . "\n";
+        // Default class schedule
+        $defaultClassSchedule = \App\Models\ClassSchedule::firstOrCreate(
+            ['start_time' => '09:00:00', 'end_time' => '17:00:00'],
+            ['school_class_id' => 1, 'section_id' => 1, 'schedule_name' => 'Default Schedule']
+        );
 
-        // Step 3: Process each entry
         foreach ($data as $entry) {
-            echo "➡ Processing User ID: {$entry['id']} | Time: {$entry['timestamp']}\n";
+            $machineUserId = $entry['id'] ?? $entry['uid'] ?? null;
+            if (!$machineUserId) continue;
 
-            $date = date('Y-m-d', strtotime($entry['timestamp']));
-            $time = date('H:i:s', strtotime($entry['timestamp']));
+            $timestamp = strtotime($entry['timestamp']);
+            $date      = date('Y-m-d', $timestamp);
+            $time      = date('H:i:s', $timestamp);
 
-            // Skip Friday
-            if (date('l', strtotime($date)) === 'Friday') {
-                echo "⏩ Skipped (Friday)\n";
-                continue;
-            }
+            // Student খুঁজে পাওয়া বা নতুন তৈরি
+            $student = \App\Models\Student::firstOrCreate(
+                ['student_id' => $machineUserId],
+                [
+                    'name'              => 'Unknown ' . $machineUserId,
+                    'class_schedule_id' => $defaultClassSchedule->id
+                ]
+            );
 
-            // Skip holiday
-            if (\App\Models\Holiday::where('date', $date)->exists()) {
-                echo "⏩ Skipped (Holiday)\n";
-                continue;
-            }
-
-            // Check existing attendance
-            $attendance = \App\Models\StudentAttendance::where('user_id', $entry['id'])
+            // StudentAttendance খুঁজে নেওয়া বা নতুন তৈরি
+            $attendance = \App\Models\StudentAttendance::where('student_id', $student->id)
                 ->where('date', $date)
                 ->first();
 
             if (!$attendance) {
+                // নতুন এন্ট্রি
                 \App\Models\StudentAttendance::create([
-                    'device_ip'         => $machineId,
-                    'user_id'           => $entry['id'],
-                    'class_schedule_id' => null,
+                    'student_id'        => $student->id,
+                    'class_schedule_id' => $defaultClassSchedule->id,
+                    'device_user_id'    => $machineUserId,   // মেশিন থেকে আসা User ID
+                    'device_ip'         => $deviceIp,       // মেশিনের IP
                     'date'              => $date,
                     'in_time'           => $time,
                     'out_time'          => $time,
                     'status'            => 'Present',
                     'source'            => 'device',
                 ]);
-                echo "✅ New attendance saved for user {$entry['id']} on {$date}\n";
             } else {
-                if ($attendance->in_time === null || strtotime($time) < strtotime($attendance->in_time)) {
-                    $attendance->in_time = $time;
-                }
-                if ($attendance->out_time === null || strtotime($time) > strtotime($attendance->out_time)) {
-                    $attendance->out_time = $time;
-                }
-                $attendance->device_ip = $machineId;
-                $attendance->save();
+                // আগের ইন/আউট টাইমের সাথে মিলিয়ে নতুন টাইম আপডেট
+                $updated = false;
 
-                echo "🔄 Attendance updated for user {$entry['id']} on {$date}\n";
+                if (strtotime($time) < strtotime($attendance->in_time)) {
+                    $attendance->in_time = $time;
+                    $updated = true;
+                }
+                if (strtotime($time) > strtotime($attendance->out_time)) {
+                    $attendance->out_time = $time;
+                    $updated = true;
+                }
+
+                if ($updated) {
+                    $attendance->save();
+                }
             }
         }
 
         $zk->disconnect();
-        echo "🎉 Attendance sync completed.\n";
+        return back()->with('success', 'Attendance synced successfully without duplicates!');
     }
 
 }

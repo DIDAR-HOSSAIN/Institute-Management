@@ -20,4 +20,10 @@ class SchoolClass extends Model
     {
         return $this->hasMany(ClassSchedule::class);
     }
+
+    public function students()
+    {
+        return $this->hasMany(Student::class);
+    }
+
 }

@@ -63,12 +63,12 @@ Route::resource('students', StudentController::class);
 Route::resource('classes', SchoolClassController::class);
 Route::resource('sections', SectionController::class);
 Route::resource('class-schedule', ClassScheduleController::class);
-Route::resource('/attendance', StudentAttendanceController::class);
 // Show the page
 Route::get('/attendance/sync/create', [StudentAttendanceController::class, 'syncCreate']);
 
 // Sync device and save to student_attendances table
 Route::get('/attendance/sync', [StudentAttendanceController::class, 'sync'])->name('attendance.sync');
+Route::resource('/attendance', StudentAttendanceController::class);
 
 
 // Route::get('/zk-test', function () {

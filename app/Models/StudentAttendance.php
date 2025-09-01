@@ -12,7 +12,7 @@ class StudentAttendance extends Model
     protected $fillable = [
         'student_id',
         'class_schedule_id',
-        'user_id',
+        'device_user_id',
         'date',
         'in_time',
         'out_time',

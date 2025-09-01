@@ -26,5 +26,10 @@ class ClassSchedule extends Model
     {
         return $this->belongsTo(Section::class);
     }
+
+    public function students()
+    {
+        return $this->hasMany(Student::class);
+    }
     
 }
