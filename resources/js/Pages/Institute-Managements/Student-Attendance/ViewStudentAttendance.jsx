@@ -15,8 +15,13 @@ const ViewStudentAttendance = ({ attendances, classes, sections, schedules, filt
 
     const submit = (e) => {
         e.preventDefault();
-        get(route("attendance.index"), { preserveState: true, preserveScroll: true });
+        get(route("attendance.index"), {
+            preserveState: true,
+            preserveScroll: true,
+            data, // filters (class, section, schedule, start_date, end_date) backend এ যাবে
+        });
     };
+
 
     return (
         <div className="p-4">

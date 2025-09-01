@@ -21,74 +21,72 @@ class StudentAttendanceController extends Controller
      * Display a listing of the resource.
      */
     public function index(Request $request)
-    {
-        // Filters
-        $filters = $request->only([
-            'school_class_id',
-            'section_id',
-            'schedule_id',
-            'start_date',
-            'end_date'
-        ]);
+{
+    // Filters
+    $filters = $request->only([
+        'school_class_id',
+        'section_id',
+        'schedule_id',
+        'start_date',
+        'end_date'
+    ]);
 
-        // Base query with relationships
-        $query = StudentAttendance::with([
-            'student.schoolClass',
-            'student.section',
-            'classSchedule' => function ($q) use ($filters) {
-                if (!empty($filters['start_date'])) {
-                    $q->whereDate('date', '>=', $filters['start_date']);
-                }
-                if (!empty($filters['end_date'])) {
-                    $q->whereDate('date', '<=', $filters['end_date']);
-                }
-            }
-        ]);
+    // Base query with relationships
+    $query = StudentAttendance::with([
+        'student.schoolClass',
+        'student.section',
+        'classSchedule'
+    ]);
 
-        // Apply filters (student/class/section/schedule level)
-        if (!empty($filters['school_class_id'])) {
-            $query->whereHas('student', function ($q) use ($filters) {
-                $q->where('school_class_id', $filters['school_class_id']);
-            });
-        }
-
-        if (!empty($filters['section_id'])) {
-            $query->whereHas('student', function ($q) use ($filters) {
-                $q->where('section_id', $filters['section_id']);
-            });
-        }
-
-        if (!empty($filters['schedule_id'])) {
-            $query->where('class_schedule_id', $filters['schedule_id']);
-        }
-
-        // এখানে date filter attendances এর উপর না বসিয়ে classSchedule relation এর উপর বসানো হয়েছে
-        // তাই সব attendance আসবে, কিন্তু classSchedule relation তারিখ অনুযায়ী আসবে
-
-        // Get paginated attendances
-        $attendances = $query->orderBy('date', 'desc')->paginate(20)->withQueryString();
-
-        // Summary counts
-        $summary = [
-            'Present' => (clone $query)->where('status', 'Present')->count(),
-            'Absent'  => (clone $query)->where('status', 'Absent')->count(),
-            'Late'    => (clone $query)->where('status', 'Late')->count(),
-            'Leave'   => (clone $query)->where('status', 'Leave')->count(),
-            'Holiday' => (clone $query)->where('status', 'Holiday')->count(),
-        ];
-
-        return Inertia::render('Institute-Managements/Student-Attendance/ViewStudentAttendance', [
-            'attendances' => $attendances,
-
-            // 👇 ফ্রন্টএন্ডের সাথে match করার জন্য alias করা হলো
-            'classes'   => SchoolClass::all(['id as id', 'class_name as name']),
-            'sections'  => Section::all(['id as id', 'section_name as name']),
-            'schedules' => ClassSchedule::all(['id as id', 'schedule_name as name']),
-
-            'filters' => $filters,
-            'summary' => $summary,
-        ]);
+    // Date filters on StudentAttendance table
+    if (!empty($filters['start_date'])) {
+        $query->whereDate('date', '>=', $filters['start_date']);
     }
+    if (!empty($filters['end_date'])) {
+        $query->whereDate('date', '<=', $filters['end_date']);
+    }
+
+    // Apply filters (student/class/section/schedule level)
+    if (!empty($filters['school_class_id'])) {
+        $query->whereHas('student', function ($q) use ($filters) {
+            $q->where('school_class_id', $filters['school_class_id']);
+        });
+    }
+
+    if (!empty($filters['section_id'])) {
+        $query->whereHas('student', function ($q) use ($filters) {
+            $q->where('section_id', $filters['section_id']);
+        });
+    }
+
+    if (!empty($filters['schedule_id'])) {
+        $query->where('class_schedule_id', $filters['schedule_id']);
+    }
+
+    // Get paginated attendances
+    $attendances = $query->orderBy('date', 'desc')->paginate(20)->withQueryString();
+
+    // Summary counts
+    $summary = [
+        'Present' => (clone $query)->where('status', 'Present')->count(),
+        'Absent'  => (clone $query)->where('status', 'Absent')->count(),
+        'Late'    => (clone $query)->where('status', 'Late')->count(),
+        'Leave'   => (clone $query)->where('status', 'Leave')->count(),
+        'Holiday' => (clone $query)->where('status', 'Holiday')->count(),
+    ];
+
+    return Inertia::render('Institute-Managements/Student-Attendance/ViewStudentAttendance', [
+        'attendances' => $attendances,
+
+        'classes'   => SchoolClass::all(['id as id', 'class_name as name']),
+        'sections'  => Section::all(['id as id', 'section_name as name']),
+        'schedules' => ClassSchedule::all(['id as id', 'schedule_name as name']),
+
+        'filters' => $filters,
+        'summary' => $summary,
+    ]);
+}
+
 
 
     /**
