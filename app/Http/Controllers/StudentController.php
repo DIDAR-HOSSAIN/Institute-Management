@@ -45,6 +45,7 @@ class StudentController extends Controller
             'section_id'    => 'required|exists:sections,id',
             'dob'           => 'nullable|date',
             'academic_year' => 'nullable|string',
+            'device_user_id' => 'nullable',
             'gender'        => 'nullable|string',
             'contact_no'    => 'nullable|string',
             'address'       => 'nullable|string'

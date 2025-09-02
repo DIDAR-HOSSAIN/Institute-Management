@@ -146,6 +146,8 @@ class StudentAttendanceController extends Controller
     }
 
 
+   
+
     public function sync()
     {
         $deviceIp = '192.168.1.40';
@@ -161,12 +163,6 @@ class StudentAttendanceController extends Controller
             return back()->with('error', 'No attendance data found on device.');
         }
 
-        // Default class schedule
-        $defaultClassSchedule = \App\Models\ClassSchedule::firstOrCreate(
-            ['start_time' => '09:00:00', 'end_time' => '17:00:00'],
-            ['school_class_id' => 1, 'section_id' => 1, 'schedule_name' => 'Default Schedule']
-        );
-
         foreach ($data as $entry) {
             $machineUserId = $entry['id'] ?? $entry['uid'] ?? null;
             if (!$machineUserId) continue;
@@ -175,35 +171,33 @@ class StudentAttendanceController extends Controller
             $date      = date('Y-m-d', $timestamp);
             $time      = date('H:i:s', $timestamp);
 
-            // Student খুঁজে পাওয়া বা নতুন তৈরি
-            $student = \App\Models\Student::firstOrCreate(
-                ['student_id' => $machineUserId],
-                [
-                    'name'              => 'Unknown ' . $machineUserId,
-                    'class_schedule_id' => $defaultClassSchedule->id
-                ]
-            );
+            // Student খুঁজে পাওয়া (আগেই ভর্তি করা থাকবে)
+            $student = \App\Models\Student::where('device_user_id', $machineUserId)->first();
+
+            if (!$student) {
+                // যদি মেশিনের user_id এর সাথে কোনো student না মেলে → skip
+                continue;
+            }
 
             // StudentAttendance খুঁজে নেওয়া বা নতুন তৈরি
-            $attendance = \App\Models\StudentAttendance::where('student_id', $student->id)
+            $attendance = \App\Models\StudentAttendance::where('device_user_id', $machineUserId)
                 ->where('date', $date)
                 ->first();
 
             if (!$attendance) {
-                // নতুন এন্ট্রি
+                // নতুন attendance এন্ট্রি
                 \App\Models\StudentAttendance::create([
-                    'student_id'        => $student->id,
-                    'class_schedule_id' => $defaultClassSchedule->id,
-                    'device_user_id'    => $machineUserId,   // মেশিন থেকে আসা User ID
-                    'device_ip'         => $deviceIp,       // মেশিনের IP
-                    'date'              => $date,
-                    'in_time'           => $time,
-                    'out_time'          => $time,
-                    'status'            => 'Present',
-                    'source'            => 'device',
+                    'student_id'     => $student->id,
+                    'device_user_id' => $machineUserId,
+                    'device_ip'      => $deviceIp,
+                    'date'           => $date,
+                    'in_time'        => $time,
+                    'out_time'       => $time,
+                    'status'         => 'Present',
+                    'source'         => 'device',
                 ]);
             } else {
-                // আগের ইন/আউট টাইমের সাথে মিলিয়ে নতুন টাইম আপডেট
+                // আগের in/out time update করা
                 $updated = false;
 
                 if (strtotime($time) < strtotime($attendance->in_time)) {
@@ -222,7 +216,91 @@ class StudentAttendanceController extends Controller
         }
 
         $zk->disconnect();
-        return back()->with('success', 'Attendance synced successfully without duplicates!');
+        return back()->with('success', 'Attendance synced successfully!');
     }
+
+
+
+
+
+
+    // public function sync()
+    // {
+    //     $deviceIp = '192.168.1.40';
+    //     $zk = new \MehediJaman\LaravelZkteco\LaravelZkteco($deviceIp);
+
+    //     if (!$zk->connect()) {
+    //         return back()->with('error', 'Unable to connect to device.');
+    //     }
+
+    //     $data = $zk->getAttendance();
+
+    //     if (empty($data)) {
+    //         return back()->with('error', 'No attendance data found on device.');
+    //     }
+
+    //     // Default class schedule
+    //     $defaultClassSchedule = \App\Models\ClassSchedule::firstOrCreate(
+    //         ['start_time' => '09:00:00', 'end_time' => '17:00:00'],
+    //         ['school_class_id' => 1, 'section_id' => 1, 'schedule_name' => 'Default Schedule']
+    //     );
+
+    //     foreach ($data as $entry) {
+    //         $machineUserId = $entry['id'] ?? $entry['uid'] ?? null;
+    //         if (!$machineUserId) continue;
+
+    //         $timestamp = strtotime($entry['timestamp']);
+    //         $date      = date('Y-m-d', $timestamp);
+    //         $time      = date('H:i:s', $timestamp);
+
+    //         // Student খুঁজে পাওয়া বা নতুন তৈরি
+    //         $student = \App\Models\Student::firstOrCreate(
+    //             ['student_id' => $machineUserId],
+    //             [
+    //                 'name'              => 'Unknown ' . $machineUserId,
+    //                 'class_schedule_id' => $defaultClassSchedule->id
+    //             ]
+    //         );
+
+    //         // StudentAttendance খুঁজে নেওয়া বা নতুন তৈরি
+    //         $attendance = \App\Models\StudentAttendance::where('student_id', $student->id)
+    //             ->where('date', $date)
+    //             ->first();
+
+    //         if (!$attendance) {
+    //             // নতুন এন্ট্রি
+    //             \App\Models\StudentAttendance::create([
+    //                 'student_id'        => $student->id,
+    //                 'class_schedule_id' => $defaultClassSchedule->id,
+    //                 'device_user_id'    => $machineUserId,   // মেশিন থেকে আসা User ID
+    //                 'device_ip'         => $deviceIp,       // মেশিনের IP
+    //                 'date'              => $date,
+    //                 'in_time'           => $time,
+    //                 'out_time'          => $time,
+    //                 'status'            => 'Present',
+    //                 'source'            => 'device',
+    //             ]);
+    //         } else {
+    //             // আগের ইন/আউট টাইমের সাথে মিলিয়ে নতুন টাইম আপডেট
+    //             $updated = false;
+
+    //             if (strtotime($time) < strtotime($attendance->in_time)) {
+    //                 $attendance->in_time = $time;
+    //                 $updated = true;
+    //             }
+    //             if (strtotime($time) > strtotime($attendance->out_time)) {
+    //                 $attendance->out_time = $time;
+    //                 $updated = true;
+    //             }
+
+    //             if ($updated) {
+    //                 $attendance->save();
+    //             }
+    //         }
+    //     }
+
+    //     $zk->disconnect();
+    //     return back()->with('success', 'Attendance synced successfully without duplicates!');
+    // }
 
 }

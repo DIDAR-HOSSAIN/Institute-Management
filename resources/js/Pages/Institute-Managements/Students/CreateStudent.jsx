@@ -10,6 +10,7 @@ export default function Create() {
         section_id: '',
         dob: '',
         academic_year: '',
+        device_user_id: '',
         gender: '',
         contact_no: '',
         address: ''
@@ -72,6 +73,10 @@ export default function Create() {
                 <div>
                     <label className="block mb-1">Academic Year</label>
                     <input value={data.academic_year} onChange={e => setData('academic_year', e.target.value)} className="w-full border p-2 rounded" placeholder="e.g. 2024-2025" />
+                </div>
+                <div>
+                    <label className="block mb-1">Attendance ID</label>
+                    <input value={data.device_user_id} onChange={e => setData('device_user_id', e.target.value)} className="w-full border p-2 rounded" placeholder="Attendance ID" />
                 </div>
 
                 <div>

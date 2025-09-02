@@ -17,7 +17,7 @@ return new class extends Migration
             $table->integer('roll_number')->unique();
             $table->unsignedBigInteger('school_class_id')->nullable();
             $table->unsignedBigInteger('section_id')->nullable();
-            $table->integer('machine_user_id')->nullable();
+            $table->integer('device_user_id')->nullable();
             $table->date('dob')->nullable();
             $table->string('academic_year')->nullable();
             $table->string('gender')->nullable();

@@ -3,6 +3,7 @@ import { Link, usePage } from '@inertiajs/react';
 
 const ViewStudents = () => {
     const { students, flash } = usePage().props;
+    console.log('STUDENTS', students);
 
     return (
         <div className="max-w-5xl mx-auto p-4">
