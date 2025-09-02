@@ -12,6 +12,8 @@ const ViewStudentAttendance = ({ attendances, classes, sections, schedules, filt
         end_date: filters?.end_date || ""
     });
 
+    
+
 
     const submit = (e) => {
         e.preventDefault();

@@ -186,7 +186,7 @@ const SidebarMenu = () => {
                         Add Payroll
                     </Link>
                     <Link
-                        href="/attendance/report"
+                        href="/attendance"
                         className="hover:bg-yellow-200 font-bold btn btn-blue rounded"
                     >
                         Manage Payroll

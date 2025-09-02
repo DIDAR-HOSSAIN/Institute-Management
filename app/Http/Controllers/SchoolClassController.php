@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\SchoolClass;
 use App\Http\Requests\StoreSchoolClassRequest;
 use App\Http\Requests\UpdateSchoolClassRequest;
+use App\Models\ClassSchedule;
+use App\Models\Section;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class SchoolClassController extends Controller
@@ -14,8 +17,42 @@ class SchoolClassController extends Controller
      */
     public function index()
     {
-        $classes = SchoolClass::with('sections')->get();
-        return Inertia::render('Institute-Managements/School-Class/ViewSchoolClasses', ['classes' => $classes]);
+        $classes = SchoolClass::with(['sections', 'schedules'])->get();
+        return Inertia::render('Institute-Managements/School-Class/ViewSchoolClasses', [
+            'classes' => $classes
+        ]);
+    }
+
+    public function storeClass(Request $request)
+    {
+        $request->validate(['name' => 'required']);
+        SchoolClass::create($request->only('name'));
+        return back()->with('success', 'Class created successfully');
+    }
+
+    public function storeSection(Request $request)
+    {
+        $request->validate([
+            'school_class_id' => 'required|exists:school_classes,id',
+            'name' => 'required'
+        ]);
+        Section::create($request->only('school_class_id', 'name'));
+        return back()->with('success', 'Section created successfully');
+    }
+
+    public function storeSchedule(Request $request)
+    {
+        $request->validate([
+            'school_class_id' => 'required|exists:school_classes,id',
+            'section_id' => 'required|exists:sections,id',
+            'subject' => 'required',
+            'teacher' => 'required',
+            'day' => 'required',
+            'start_time' => 'required',
+            'end_time' => 'required',
+        ]);
+        ClassSchedule::create($request->all());
+        return back()->with('success', 'Schedule created successfully');
     }
 
     /**

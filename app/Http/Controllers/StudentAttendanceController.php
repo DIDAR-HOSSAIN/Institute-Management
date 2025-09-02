@@ -8,10 +8,7 @@ use App\Http\Requests\UpdateStudentAttendanceRequest;
 use App\Models\ClassSchedule;
 use App\Models\SchoolClass;
 use App\Models\Section;
-use App\Models\Student;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use MehediJaman\LaravelZkteco\LaravelZkteco;
 
@@ -139,6 +136,8 @@ class StudentAttendanceController extends Controller
         $studentAttendance->delete();
         return redirect()->route('attendance.index')->with('success', 'Deleted');
     }
+
+
 
 
     public function syncCreate()
