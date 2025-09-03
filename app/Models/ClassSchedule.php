@@ -10,7 +10,6 @@ class ClassSchedule extends Model
     use HasFactory;
 
     protected $fillable = [
-        'school_class_id',
         'section_id',
         'schedule_name',
         'start_time',

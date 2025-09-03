@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('student_id')->nullable();
             $table->unsignedBigInteger('class_schedule_id')->nullable();
-            $table->integer('user_id')->nullable();
+            $table->integer('device_user_id')->nullable();
             $table->date('date');
             $table->time('in_time');
             $table->time('out_time');

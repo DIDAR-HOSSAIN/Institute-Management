@@ -146,7 +146,6 @@ class StudentAttendanceController extends Controller
     }
 
 
-   
 
     public function sync()
     {
@@ -173,11 +172,14 @@ class StudentAttendanceController extends Controller
 
             // Student খুঁজে পাওয়া (আগেই ভর্তি করা থাকবে)
             $student = \App\Models\Student::where('device_user_id', $machineUserId)->first();
+            dd($student);
 
             if (!$student) {
                 // যদি মেশিনের user_id এর সাথে কোনো student না মেলে → skip
                 continue;
             }
+
+            // $schedule = \App\Models\ClassSchedule::where('class_schedule_id')->first();
 
             // StudentAttendance খুঁজে নেওয়া বা নতুন তৈরি
             $attendance = \App\Models\StudentAttendance::where('device_user_id', $machineUserId)
@@ -188,6 +190,7 @@ class StudentAttendanceController extends Controller
                 // নতুন attendance এন্ট্রি
                 \App\Models\StudentAttendance::create([
                     'student_id'     => $student->id,
+                    // 'class_schedule_id'     => $schedule->id,
                     'device_user_id' => $machineUserId,
                     'device_ip'      => $deviceIp,
                     'date'           => $date,

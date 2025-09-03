@@ -39,7 +39,6 @@ class ClassScheduleController extends Controller
     public function store(StoreClassScheduleRequest $request)
     {
         $validated = $request->validate([
-            'school_class_id' => 'required|exists:school_classes,id',
             'section_id'      => 'required|exists:sections,id',
             'schedule_name'   => 'required',
             'start_time'      => 'required|date_format:H:i',

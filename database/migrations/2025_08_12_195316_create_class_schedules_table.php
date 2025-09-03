@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::create('class_schedules', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('school_class_id');
             $table->unsignedBigInteger('section_id');
             $table->string('schedule_name');
             $table->time('start_time');
