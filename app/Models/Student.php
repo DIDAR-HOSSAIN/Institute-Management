@@ -36,10 +36,12 @@ class Student extends Model
         return $this->hasMany(StudentAttendance::class);
     }
 
-    public function classSchedule()
+    public function classSchedules()
     {
-        return $this->belongsTo(ClassSchedule::class);
+        return $this->hasMany(ClassSchedule::class, 'school_class_id', 'school_class_id')
+            ->where('section_id', $this->section_id);
     }
+
 
     public function fees()
     {
