@@ -172,7 +172,7 @@ class StudentAttendanceController extends Controller
 
             // Student খুঁজে পাওয়া (আগেই ভর্তি করা থাকবে)
             $student = \App\Models\Student::where('device_user_id', $machineUserId)->first();
-            dd($student);
+            // dd($student);
 
             if (!$student) {
                 // যদি মেশিনের user_id এর সাথে কোনো student না মেলে → skip
