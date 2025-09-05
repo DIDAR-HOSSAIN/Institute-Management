@@ -6,10 +6,11 @@ use App\Models\StudentAttendance;
 use App\Http\Requests\StoreStudentAttendanceRequest;
 use App\Http\Requests\UpdateStudentAttendanceRequest;
 use App\Models\ClassSchedule;
-use App\Models\Holiday;
 use App\Models\SchoolClass;
 use App\Models\Section;
 use App\Models\Student;
+use App\Models\Holiday;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
@@ -20,76 +21,79 @@ class StudentAttendanceController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
-    {
-        // Filters
-        $filters = $request->only([
-            'school_class_id',
-            'section_id',
-            'schedule_id',
-            'start_date',
-            'end_date'
-        ]);
+public function index(Request $request)
+{
+    // Filters
+    $filters = $request->only([
+        'school_class_id',
+        'section_id',
+        'schedule_id',
+        'start_date',
+        'end_date'
+    ]);
 
-        // Base query with relationships
-        $query = StudentAttendance::with([
-            'student.schoolClass',
-            'student.section',
-            'classSchedule' // যদি পরে আপনি class_schedule_id কলাম যোগ করেন, তাতেও ready থাকবে
-        ]);
+    // Base query with relationships
+    $query = StudentAttendance::with([
+        'student.schoolClass',
+        'student.section',
+        'classSchedule'
+    ]);
 
-        // Date filters
-        if (!empty($filters['start_date'])) {
-            $query->whereDate('date', '>=', $filters['start_date']);
-        }
-        if (!empty($filters['end_date'])) {
-            $query->whereDate('date', '<=', $filters['end_date']);
-        }
-
-        // Class filter
-        if (!empty($filters['school_class_id'])) {
-            $query->whereHas('student', function ($q) use ($filters) {
-                $q->where('school_class_id', $filters['school_class_id']);
-            });
-        }
-
-        // Section filter
-        if (!empty($filters['section_id'])) {
-            $query->whereHas('student', function ($q) use ($filters) {
-                $q->where('section_id', $filters['section_id']);
-            });
-        }
-
-        // Schedule filter (student → classSchedules এর মাধ্যমে)
-        if (!empty($filters['schedule_id'])) {
-            $query->whereHas('student.classSchedules', function ($q) use ($filters) {
-                $q->where('id', $filters['schedule_id']);
-            });
-        }
-
-        // Get paginated attendances
-        $attendances = $query->orderBy('date', 'desc')->paginate(20)->withQueryString();
-
-        // Summary counts
-        $summary = [
-            'Present' => (clone $query)->where('status', 'Present')->count(),
-            'Absent'  => (clone $query)->where('status', 'Absent')->count(),
-            'Late'    => (clone $query)->where('status', 'Late')->count(),
-            'Leave'   => (clone $query)->where('status', 'Leave')->count(),
-            'Holiday' => (clone $query)->where('status', 'Holiday')->count(),
-        ];
-
-        return Inertia::render('Institute-Managements/Student-Attendance/ViewStudentAttendance', [
-            'attendances' => $attendances,
-
-            'classes'   => SchoolClass::all(['id as id', 'class_name as name']),
-            'sections'  => Section::all(['id as id', 'section_name as name']),
-            'schedules' => ClassSchedule::all(['id as id', 'schedule_name as name']),
-
-            'filters' => $filters,
-            'summary' => $summary,
-        ]);
+    // Date filters on StudentAttendance table
+    if (!empty($filters['start_date'])) {
+        $query->whereDate('date', '>=', $filters['start_date']);
     }
+    if (!empty($filters['end_date'])) {
+        $query->whereDate('date', '<=', $filters['end_date']);
+    }
+
+    // Apply filters (student/class/section/schedule level)
+    if (!empty($filters['school_class_id'])) {
+        $query->whereHas('student', function ($q) use ($filters) {
+            $q->where('school_class_id', $filters['school_class_id']);
+        });
+    }
+
+    if (!empty($filters['section_id'])) {
+        $query->whereHas('student', function ($q) use ($filters) {
+            $q->where('section_id', $filters['section_id']);
+        });
+    }
+
+    if (!empty($filters['schedule_id'])) {
+        $query->where('class_schedule_id', $filters['schedule_id']);
+    }
+
+    // Get paginated attendances
+    $attendances = $query->orderBy('date', 'desc')->paginate(20)->withQueryString();
+
+    // Summary counts
+    $summary = [
+        'Present' => (clone $query)->where('status', 'Present')->count(),
+        'Absent'  => (clone $query)->where('status', 'Absent')->count(),
+        'Late'    => (clone $query)->where('status', 'Late')->count(),
+        'Leave'   => (clone $query)->where('status', 'Leave')->count(),
+        'Holiday' => (clone $query)->where('status', 'Holiday')->count(),
+    ];
+
+    return Inertia::render('Institute-Managements/Student-Attendance/ViewStudentAttendance', [
+        'attendances' => $attendances,
+
+        'classes'   => SchoolClass::all(['id as id', 'class_name as name']),
+        'sections'  => Section::all(['id as id', 'section_name as name']),
+
+        // ✅ এখানে start_time আর end_time যোগ করলাম
+        'schedules' => ClassSchedule::all([
+            'id as id',
+            'schedule_name as name',
+            'start_time',
+            'end_time',
+        ]),
+
+        'filters' => $filters,
+        'summary' => $summary,
+    ]);
+}
 
 
 
@@ -146,91 +150,96 @@ class StudentAttendanceController extends Controller
     }
 
 
-
-
     public function syncCreate()
     {
         return Inertia::render('Payroll/DataPull'); // তোমার React পেজ অনুযায়ী নাম দাও
     }
 
 
-    public function sync()
-    {
-        $deviceIp = '192.168.1.40';
-        $zk = new \MehediJaman\LaravelZkteco\LaravelZkteco($deviceIp);
+public function sync()
+{
+    $deviceIp = '192.168.1.40';
+    $zk = new \MehediJaman\LaravelZkteco\LaravelZkteco($deviceIp);
 
-        if (!$zk->connect()) {
-            return back()->with('error', 'Unable to connect to device.');
-        }
-
-        $data = $zk->getAttendance();
-        $today = now()->toDateString();
-
-        if (empty($data)) {
-            return back()->with('error', 'No attendance data found on device.');
-        }
-
-        // সব student লোড করবো
-        $students = Student::all();
-
-        foreach ($students as $student) {
-            // ওই student's জন্য class + section অনুযায়ী schedule নেবো
-            $schedule = ClassSchedule::where('school_class_id', $student->school_class_id)
-                ->where('section_id', $student->section_id)
-                ->first();
-
-            // 🔹 Holiday check
-            if (Holiday::whereDate('date', $today)->exists()) {
-                StudentAttendance::updateOrCreate(
-                    ['student_id' => $student->id, 'date' => $today],
-                    [
-                        'status'            => 'Holiday',
-                        'class_schedule_id' => $schedule?->id,
-                    ]
-                );
-                continue;
-            }
-
-            // 🔹 ওই student এর জন্য device record খুঁজে বের করা
-            $deviceRecord = collect($data)->where('id', (string) $student->device_user_id)->sortBy('timestamp')->first();
-
-            if ($deviceRecord) {
-                $timestamp = strtotime($deviceRecord['timestamp']);
-                $inTime = date('H:i:s', $timestamp);
-
-                // 🔹 Late check
-                $status = 'Present';
-                if ($schedule && $inTime > date('H:i:s', strtotime($schedule->start_time . ' +10 minutes'))) {
-                    $status = 'Late';
-                }
-
-                StudentAttendance::updateOrCreate(
-                    ['student_id' => $student->id, 'date' => $today],
-                    [
-                        'class_schedule_id' => $schedule?->id,
-                        'device_user_id'    => $student->device_user_id,
-                        'device_ip'         => $deviceIp,
-                        'in_time'           => $inTime,
-                        'out_time'          => $inTime, // চাইলে last record সেট করতে পারো
-                        'status'            => $status,
-                        'source'            => 'device',
-                    ]
-                );
-            } else {
-                // 🔹 Absent
-                StudentAttendance::updateOrCreate(
-                    ['student_id' => $student->id, 'date' => $today],
-                    [
-                        'status'            => 'Absent',
-                        'class_schedule_id' => $schedule?->id,
-                    ]
-                );
-            }
-        }
-
-        $zk->disconnect();
-        return back()->with('success', 'Attendance synced successfully!');
+    if (!$zk->connect()) {
+        return back()->with('error', 'Unable to connect to device.');
     }
+
+    $data = $zk->getAttendance();
+    if (empty($data)) {
+        return back()->with('error', 'No attendance data found on device.');
+    }
+
+    $today = now()->toDateString();
+    $students = Student::all();
+
+    foreach ($students as $student) {
+        // ওই student's জন্য schedule
+        $schedule = ClassSchedule::where('school_class_id', $student->school_class_id)
+            ->where('section_id', $student->section_id)
+            ->first();
+
+        // 🔹 Holiday হলে শুধু row create হবে
+        if (Holiday::whereDate('date', $today)->exists()) {
+            StudentAttendance::updateOrCreate(
+                ['student_id' => $student->id, 'date' => $today],
+                [
+                    'class_schedule_id' => $schedule?->id,
+                    'in_time'           => null,
+                    'out_time'          => null,
+                    'device_user_id'    => $student->device_user_id,
+                    'device_ip'         => $deviceIp,
+                    'source'            => 'device',
+                ]
+            );
+            continue;
+        }
+
+        // ওই student এর সব ডিভাইস রেকর্ড (আজকের তারিখের)
+        $deviceRecords = collect($data)
+            ->where('id', (string) $student->device_user_id)
+            ->filter(fn($rec) => date('Y-m-d', strtotime($rec['timestamp'])) == $today)
+            ->sortBy('timestamp');
+
+        if ($deviceRecords->isNotEmpty()) {
+            // প্রথম ফিঙ্গার → in_time
+            $firstRecord = $deviceRecords->first();
+            $firstTime = date('H:i:s', strtotime($firstRecord['timestamp']));
+
+            // শেষ ফিঙ্গার → out_time
+            $lastRecord = $deviceRecords->last();
+            $lastTime = date('H:i:s', strtotime($lastRecord['timestamp']));
+
+            StudentAttendance::updateOrCreate(
+                ['student_id' => $student->id, 'date' => $today],
+                [
+                    'class_schedule_id' => $schedule?->id,
+                    'device_user_id'    => $student->device_user_id,
+                    'device_ip'         => $deviceIp,
+                    'in_time'           => $firstTime,
+                    'out_time'          => $lastTime,
+                    'source'            => 'device',
+                ]
+            );
+        } else {
+            // Absent → শুধু row create হবে কিন্তু in/out null
+            StudentAttendance::updateOrCreate(
+                ['student_id' => $student->id, 'date' => $today],
+                [
+                    'class_schedule_id' => $schedule?->id,
+                    'device_user_id'    => $student->device_user_id,
+                    'device_ip'         => $deviceIp,
+                    'in_time'           => null,
+                    'out_time'          => null,
+                    'source'            => 'device',
+                ]
+            );
+        }
+    }
+
+    $zk->disconnect();
+    return back()->with('success', 'Attendance synced successfully!');
+}
 
 
 
@@ -394,5 +403,6 @@ class StudentAttendanceController extends Controller
     //     $zk->disconnect();
     //     return back()->with('success', 'Attendance synced successfully without duplicates!');
     // }
+
 
 }

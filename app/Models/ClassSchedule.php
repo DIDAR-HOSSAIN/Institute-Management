@@ -10,11 +10,13 @@ class ClassSchedule extends Model
     use HasFactory;
 
     protected $fillable = [
-        'section_id',
-        'schedule_name',
-        'start_time',
-        'end_time'
-    ];
+    'school_class_id',
+    'section_id',
+    'schedule_name',
+    'start_time',
+    'end_time'
+];
+
 
     public function schoolClass()
     {
@@ -30,5 +32,5 @@ class ClassSchedule extends Model
     {
         return $this->hasMany(Student::class);
     }
-    
+
 }

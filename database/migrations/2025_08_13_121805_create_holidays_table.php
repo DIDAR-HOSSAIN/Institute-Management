@@ -13,8 +13,9 @@ return new class extends Migration
     {
         Schema::create('holidays', function (Blueprint $table) {
             $table->id();
-            $table->string('title');         // যেমন: বিজয় দিবস
-            $table->date('date')->unique();  // নির্দিষ্ট দিন
+            $table->date('date')->unique();
+            $table->string('title');
+            $table->text('description')->nullable();
             $table->timestamps();
         });
     }

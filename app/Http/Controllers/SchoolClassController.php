@@ -16,12 +16,11 @@ class SchoolClassController extends Controller
      * Display a listing of the resource.
      */
     public function index()
-    {
-        $classes = SchoolClass::with(['sections', 'schedules'])->get();
-        return Inertia::render('Institute-Managements/School-Class/ViewSchoolClasses', [
-            'classes' => $classes
-        ]);
-    }
+{
+    $classes = SchoolClass::with(['sections', 'schedules'])->get();
+    return inertia('Institute-Managements/School-Class/ViewSchoolClasses', compact('classes'));
+}
+
 
     public function storeClass(Request $request)
     {

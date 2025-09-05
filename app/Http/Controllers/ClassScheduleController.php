@@ -15,12 +15,13 @@ class ClassScheduleController extends Controller
      * Display a listing of the resource.
      */
     public function index()
-    {
-        $schedules = ClassSchedule::with(['schoolClass', 'section'])->get();
-        return Inertia::render('Institute-Managements/ClassSchedule/ViewClassSchedule', [
-            'schedules' => $schedules
-        ]);
-    }
+{
+    $schedules = ClassSchedule::with(['classes', 'section'])->get();
+    return Inertia::render('Institute-Managements/ClassSchedule/ViewClassSchedule', [
+        'schedules' => $schedules
+    ]);
+}
+
 
     /**
      * Show the form for creating a new resource.
@@ -38,29 +39,19 @@ class ClassScheduleController extends Controller
      */
     public function store(StoreClassScheduleRequest $request)
     {
-        $validated = $request->validate([
-            'section_id'      => 'required|exists:sections,id',
-            'schedule_name'   => 'required',
-            'start_time'      => 'required|date_format:H:i',
-            'end_time'        => 'required|date_format:H:i|after:start_time',
-        ]);
+    $validated = $request->validate([
+        'school_class_id' => 'required|exists:school_classes,id',
+        'section_id'      => 'required|exists:sections,id',
+        'schedule_name'   => 'required|string',
+        'start_time'      => 'required|date_format:H:i',
+        'end_time'        => 'required|date_format:H:i|after:start_time',
+    ]);
 
-        // Weekly off check
-        $today = now()->format('l');
-        if (in_array($today, config('school.weekly_offs'))) {
-            return back()->withErrors(['day' => 'Today is a weekly off.'])->withInput();
-        }
+    ClassSchedule::create($validated);
 
-        // Holiday check
-        if (Holiday::where('date', now()->toDateString())->exists()) {
-            return back()->withErrors(['day' => 'Today is a holiday.'])->withInput();
-        }
+    return redirect()->route('class-schedule.index')->with('success', 'Schedule created!');
+}
 
-        ClassSchedule::create($validated);
-
-        return redirect()->route('class-schedule.index')->with('success', 'Schedule created!');
-
-    }
 
     /**
      * Display the specified resource.
@@ -88,15 +79,17 @@ class ClassScheduleController extends Controller
     public function update(UpdateClassScheduleRequest $request, ClassSchedule $classSchedule)
     {
         $validated = $request->validate([
-            'school_class_id' => 'required|exists:school_classes,id',
-            'section_id' => 'required|exists:sections,id',
-            'start_time' => 'required|date_format:H:i',
-            'end_time' => 'required|date_format:H:i|after:start_time',
-        ]);
+        'school_class_id' => 'required|exists:school_classes,id',
+        'section_id'      => 'required|exists:sections,id',
+        'schedule_name'   => 'required|string|max:255',
+        'start_time'      => 'required|date_format:H:i',
+        'end_time'        => 'required|date_format:H:i|after:start_time',
+    ]);
 
-        $classSchedule->update($validated);
+    $schedule->update($validated);
 
-        return redirect()->route('class-schedule.index')->with('success', 'Class schedule updated!');
+    return redirect()->route('class-schedule.index')
+                     ->with('success', 'Schedule updated successfully!');
     }
 
     /**
