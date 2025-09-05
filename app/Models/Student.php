@@ -52,4 +52,10 @@ class Student extends Model
     {
         return $this->hasMany(Result::class);
     }
+
+    public function leaves()
+    {
+        return $this->hasMany(Leave::class);
+    }
+
 }

@@ -1,4 +1,3 @@
-// ViewStudentAttendance.jsx
 import React from "react";
 import { useForm, Link } from "@inertiajs/react";
 
@@ -10,28 +9,6 @@ const ViewStudentAttendance = ({ attendances, classes, sections, schedules, filt
         start_date: filters?.start_date || "",
         end_date: filters?.end_date || ""
     });
-
-    // 🔹 Status calculation (No Grace Time)
-    const getStatus = (row) => {
-        if (!row.in_time) return "Absent";
-
-        const schedule = schedules.find((s) => s.id === row.class_schedule_id);
-
-        if (schedule && schedule.start_time) {
-            const startTime = new Date(`1970-01-01T${schedule.start_time}`);
-            const inTime = new Date(`1970-01-01T${row.in_time}`);
-
-            if (inTime > startTime) {
-                return "Late";
-            }
-            return "Present";
-        }
-
-        return "Present";
-    };
-
-
-    console.log('getStatus', schedules);
 
     const submit = (e) => {
         e.preventDefault();
@@ -47,7 +24,7 @@ const ViewStudentAttendance = ({ attendances, classes, sections, schedules, filt
             <h1 className="text-xl font-bold mb-4">📊 Attendance Report</h1>
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
                 {Object.entries(summary).map(([key, value]) => (
                     <div key={key} className="bg-gray-100 p-3 rounded shadow text-center">
                         <h2 className="font-bold">{key}</h2>
@@ -65,7 +42,7 @@ const ViewStudentAttendance = ({ attendances, classes, sections, schedules, filt
                 >
                     <option value="">All Classes</option>
                     {classes.map((c) => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
+                        <option key={c.id} value={c.id}>{c.class_name}</option>
                     ))}
                 </select>
 
@@ -76,7 +53,7 @@ const ViewStudentAttendance = ({ attendances, classes, sections, schedules, filt
                 >
                     <option value="">All Sections</option>
                     {sections.map((s) => (
-                        <option key={s.id} value={s.id}>{s.name}</option>
+                        <option key={s.id} value={s.id}>{s.section_name}</option>
                     ))}
                 </select>
 
@@ -87,7 +64,7 @@ const ViewStudentAttendance = ({ attendances, classes, sections, schedules, filt
                 >
                     <option value="">All Schedules</option>
                     {schedules.map((sch) => (
-                        <option key={sch.id} value={sch.id}>{sch.name}</option>
+                        <option key={sch.id} value={sch.id}>{sch.schedule_name}</option>
                     ))}
                 </select>
 
@@ -109,7 +86,7 @@ const ViewStudentAttendance = ({ attendances, classes, sections, schedules, filt
                 </button>
             </form>
 
-            {/* Table */}
+            {/* Attendance Table */}
             <div className="overflow-x-auto">
                 <table className="min-w-full border">
                     <thead>
@@ -127,18 +104,21 @@ const ViewStudentAttendance = ({ attendances, classes, sections, schedules, filt
                     </thead>
                     <tbody>
                         {attendances.data.map((row) => (
-                            <tr key={row.id}>
+                            <tr key={row.id} className={
+                                row.status === "Absent" ? "bg-red-100" :
+                                    row.status === "Late" ? "bg-yellow-100" :
+                                        row.status === "Leave" ? "bg-blue-100" :
+                                            row.status === "Holiday" ? "bg-green-100" : ""
+                            }>
                                 <td className="border px-2 py-1">{row.date}</td>
                                 <td className="border px-2 py-1">{row.student?.roll_number || "N/A"}</td>
                                 <td className="border px-2 py-1">{row.student?.student_name || "N/A"}</td>
-                                <td className="border px-2 py-1">{row.student?.school_class?.class_name || "N/A"}</td>
+                                <td className="border px-2 py-1">{row.student?.schoolClass?.class_name || "N/A"}</td>
                                 <td className="border px-2 py-1">{row.student?.section?.section_name || "N/A"}</td>
-                                <td className="border px-2 py-1">{row.class_schedule?.schedule_name || "N/A"}</td>
+                                <td className="border px-2 py-1">{row.classSchedule?.schedule_name || "N/A"}</td>
                                 <td className="border px-2 py-1">{row.in_time || "--"}</td>
                                 <td className="border px-2 py-1">{row.out_time || "--"}</td>
-                                <td className="border px-2 py-1 font-semibold">
-                                    {getStatus(row)}
-                                </td>
+                                <td className="border px-2 py-1 font-semibold">{row.status}</td>
                             </tr>
                         ))}
                     </tbody>

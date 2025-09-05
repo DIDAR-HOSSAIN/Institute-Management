@@ -13,14 +13,10 @@ return new class extends Migration
     {
         Schema::create('leaves', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('student_id')->constrained()->onDelete('cascade');
-            $table->foreignId('school_class_id')->constrained('school_classes')->onDelete('cascade');
-            $table->foreignId('section_id')->constrained('sections')->onDelete('cascade');
-            $table->enum('leave_type', ['Sick', 'Casual', 'Other']);
+            $table->integer('student_id');
             $table->date('start_date');
             $table->date('end_date');
-            $table->text('reason')->nullable();
-            $table->enum('status', ['Approved', 'Pending', 'Rejected'])->default('Pending');
+            $table->string('reason')->nullable();
             $table->timestamps();
         });
     }
