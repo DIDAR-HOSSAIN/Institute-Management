@@ -28,6 +28,6 @@ class StudentAttendance extends Model
 
     public function classSchedule()
     {
-        return $this->belongsTo(ClassSchedule::class);
+        return $this->belongsTo(ClassSchedule::class, 'class_schedule_id');
     }
 }

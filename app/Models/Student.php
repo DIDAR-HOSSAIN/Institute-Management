@@ -38,8 +38,8 @@ class Student extends Model
 
     public function classSchedules()
     {
-        return $this->hasMany(ClassSchedule::class, 'school_class_id', 'school_class_id')
-            ->where('section_id', $this->section_id);
+        return $this->hasMany(ClassSchedule::class, 'section_id', 'section_id')
+            ->where('school_class_id', $this->school_class_id);
     }
 
 

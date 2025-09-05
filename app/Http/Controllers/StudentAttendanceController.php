@@ -11,6 +11,7 @@ use App\Models\SchoolClass;
 use App\Models\Section;
 use App\Models\Student;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use MehediJaman\LaravelZkteco\LaravelZkteco;
 
@@ -165,31 +166,39 @@ class StudentAttendanceController extends Controller
         $data = $zk->getAttendance();
         $today = now()->toDateString();
 
-        // সব Student লোড করবো তাদের ClassSchedules সহ
-        $students = Student::with('classSchedules')->get();
+        if (empty($data)) {
+            return back()->with('error', 'No attendance data found on device.');
+        }
+
+        // সব student লোড করবো
+        $students = Student::all();
 
         foreach ($students as $student) {
-            // আজকের schedule খুঁজে বের করা
-            $schedule = $student->classSchedules->first(); // ধরলাম একটাই schedule
+            // ওই student's জন্য class + section অনুযায়ী schedule নেবো
+            $schedule = ClassSchedule::where('school_class_id', $student->school_class_id)
+                ->where('section_id', $student->section_id)
+                ->first();
 
-            // Holiday check
-            $isHoliday = Holiday::whereDate('date', $today)->exists();
-            if ($isHoliday) {
+            // 🔹 Holiday check
+            if (Holiday::whereDate('date', $today)->exists()) {
                 StudentAttendance::updateOrCreate(
                     ['student_id' => $student->id, 'date' => $today],
-                    ['status' => 'Holiday', 'class_schedule_id' => $schedule?->id]
+                    [
+                        'status'            => 'Holiday',
+                        'class_schedule_id' => $schedule?->id,
+                    ]
                 );
                 continue;
             }
 
-            // Device record খুঁজে বের করা
-            $deviceRecord = collect($data)->firstWhere('id', $student->device_user_id);
+            // 🔹 ওই student এর জন্য device record খুঁজে বের করা
+            $deviceRecord = collect($data)->where('id', (string) $student->device_user_id)->sortBy('timestamp')->first();
 
             if ($deviceRecord) {
                 $timestamp = strtotime($deviceRecord['timestamp']);
                 $inTime = date('H:i:s', $timestamp);
 
-                // Late check
+                // 🔹 Late check
                 $status = 'Present';
                 if ($schedule && $inTime > date('H:i:s', strtotime($schedule->start_time . ' +10 minutes'))) {
                     $status = 'Late';
@@ -202,16 +211,19 @@ class StudentAttendanceController extends Controller
                         'device_user_id'    => $student->device_user_id,
                         'device_ip'         => $deviceIp,
                         'in_time'           => $inTime,
-                        'out_time'          => $inTime,
+                        'out_time'          => $inTime, // চাইলে last record সেট করতে পারো
                         'status'            => $status,
                         'source'            => 'device',
                     ]
                 );
             } else {
-                // Absent
+                // 🔹 Absent
                 StudentAttendance::updateOrCreate(
                     ['student_id' => $student->id, 'date' => $today],
-                    ['status' => 'Absent', 'class_schedule_id' => $schedule?->id]
+                    [
+                        'status'            => 'Absent',
+                        'class_schedule_id' => $schedule?->id,
+                    ]
                 );
             }
         }
@@ -219,6 +231,8 @@ class StudentAttendanceController extends Controller
         $zk->disconnect();
         return back()->with('success', 'Attendance synced successfully!');
     }
+
+
 
 
 
