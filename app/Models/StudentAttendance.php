@@ -52,6 +52,7 @@ class StudentAttendance extends Model
         return Holiday::whereDate('date', $this->date)->exists();
     }
 
+
     // Status calculation
     public function getStatusAttribute()
     {

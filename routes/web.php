@@ -9,8 +9,10 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DonorMemberController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\GeneralMemberController;
+use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProductController;
@@ -63,6 +65,8 @@ Route::resource('students', StudentController::class);
 Route::resource('classes', SchoolClassController::class);
 Route::resource('sections', SectionController::class);
 Route::resource('class-schedule', ClassScheduleController::class);
+Route::resource('holidays', HolidayController::class);
+Route::resource('leaves', LeaveController::class);
 // Show the page
 Route::get('/attendance/sync/create', [StudentAttendanceController::class, 'syncCreate']);
 

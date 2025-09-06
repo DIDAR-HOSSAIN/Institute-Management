@@ -13,8 +13,9 @@ return new class extends Migration
     {
         Schema::create('holidays', function (Blueprint $table) {
             $table->id();
-            $table->date('date')->unique(); // Holiday date
-            $table->string('reason')->nullable(); // Optional description
+            $table->date('date')->unique();
+            $table->string('title')->nullable();
+            $table->string('description')->nullable(); 
             $table->timestamps();
         });
     }

@@ -14,9 +14,8 @@ class HolidayController extends Controller
      */
     public function index()
     {
-        return Inertia::render('Institute-Managements/Holidays/ViewHolidays', [
-            'holidays' => Holiday::orderBy('date', 'desc')->get(),
-        ]);
+        $holidays = Holiday::orderBy('date', 'desc')->paginate(10);
+        return inertia('Institute-Managements/Holidays/ViewHolidays', compact('holidays'));
     }
 
     /**
@@ -32,13 +31,15 @@ class HolidayController extends Controller
      */
     public function store(StoreHolidayRequest $request)
     {
-        $data = $request->validate([
+        $request->validate([
+            'date' => 'required|date|unique:holidays,date',
             'title' => 'required|string|max:255',
-            'date'  => 'required|date|unique:holidays,date',
+            'description' => 'nullable|string',
         ]);
 
-        Holiday::create($data);
-        return redirect()->route('holidays.index')->with('success', 'Holiday added.');
+        Holiday::create($request->all());
+
+        return redirect()->route('holidays.index')->with('success', 'Holiday created successfully.');
     }
 
     /**

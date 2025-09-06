@@ -1,77 +1,60 @@
-import React, { useState } from "react";
-import { useForm, usePage } from "@inertiajs/react";
+import { useForm } from '@inertiajs/inertia-react';
+import React from 'react';
 
-const CreateClassSchedule = () => {
-    const { classes } = usePage().props;
-    const { data, setData, post, errors } = useForm({
-        school_class_id: '',
-        section_id: '',
-        day_of_week: '',
-        start_time: '',
-        end_time: ''
+const CreateHoliday = () => {
+    const { data, setData, post, processing, errors } = useForm({
+        date: "",
+        title: "",
+        description: "",
     });
 
-    const [sections, setSections] = useState([]);
-
-    function onClassChange(e) {
-        const id = e.target.value;
-        setData('school_class_id', id);
-        const cls = classes.find(c => c.id == id);
-        setSections(cls ? cls.sections : []);
-        setData('section_id', '');
-    }
-
-    function submit(e) {
+    const handleSubmit = (e) => {
         e.preventDefault();
-        post(route('class-schedule.store'));
-    }
+        post(route("holidays.store"));
+    };
 
     return (
-        <form onSubmit={submit} className="space-y-4">
-            <div>
-                <label>Class</label>
-                <select value={data.school_class_id} onChange={onClassChange}>
-                    <option value="">Select Class</option>
-                    {classes.map(c => <option key={c.id} value={c.id}>{c.class_name}</option>)}
-                </select>
-                {errors.school_class_id && <div>{errors.school_class_id}</div>}
-            </div>
-
-            <div>
-                <label>Section</label>
-                <select value={data.section_id} onChange={e => setData('section_id', e.target.value)}>
-                    <option value="">Select Section</option>
-                    {sections.map(s => <option key={s.id} value={s.id}>{s.section_name}</option>)}
-                </select>
-                {errors.section_id && <div>{errors.section_id}</div>}
-            </div>
-
-            <div>
-                <label>Day</label>
-                <select value={data.day_of_week} onChange={e => setData('day_of_week', e.target.value)}>
-                    <option value="">Select Day</option>
-                    {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map(day => (
-                        <option key={day} value={day}>{day}</option>
-                    ))}
-                </select>
-                {errors.day_of_week && <div>{errors.day_of_week}</div>}
-            </div>
-
-            <div>
-                <label>Start Time</label>
-                <input type="time" value={data.start_time} onChange={e => setData('start_time', e.target.value)} />
-                {errors.start_time && <div>{errors.start_time}</div>}
-            </div>
-
-            <div>
-                <label>End Time</label>
-                <input type="time" value={data.end_time} onChange={e => setData('end_time', e.target.value)} />
-                {errors.end_time && <div>{errors.end_time}</div>}
-            </div>
-
-            <button type="submit">Save</button>
-        </form>
+        <div className="max-w-lg mx-auto bg-white p-6 shadow rounded">
+            <h2 className="text-xl font-bold mb-4">Add Holiday</h2>
+            <form onSubmit={handleSubmit}>
+                <div className="mb-3">
+                    <label>Date</label>
+                    <input
+                        type="date"
+                        className="w-full border p-2"
+                        value={data.date}
+                        onChange={(e) => setData("date", e.target.value)}
+                    />
+                    {errors.date && <div className="text-red-500">{errors.date}</div>}
+                </div>
+                <div className="mb-3">
+                    <label>Title</label>
+                    <input
+                        type="text"
+                        className="w-full border p-2"
+                        value={data.title}
+                        onChange={(e) => setData("title", e.target.value)}
+                    />
+                    {errors.title && <div className="text-red-500">{errors.title}</div>}
+                </div>
+                <div className="mb-3">
+                    <label>Description</label>
+                    <textarea
+                        className="w-full border p-2"
+                        value={data.description}
+                        onChange={(e) => setData("description", e.target.value)}
+                    />
+                </div>
+                <button
+                    type="submit"
+                    className="bg-blue-500 text-white px-4 py-2 rounded"
+                    disabled={processing}
+                >
+                    Save
+                </button>
+            </form>
+        </div>
     );
 };
 
-export default CreateClassSchedule;
+export default CreateHoliday;

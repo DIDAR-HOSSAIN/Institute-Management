@@ -58,21 +58,47 @@ class StudentAttendanceController extends Controller
 
         $attendances = $query->orderBy('date', 'desc')->paginate(20)->withQueryString();
 
-        // Map additional flags
         $attendances->getCollection()->transform(function ($attendance) {
-            $attendance->holiday = $attendance->isHoliday();
-            $attendance->is_on_leave = $attendance->isOnLeave();
+
+            // আজকের জন্য প্রযোজ্য leave
+            $leave_for_today = $attendance->leave()
+                ->whereDate('start_date', '<=', $attendance->date)
+                ->whereDate('end_date', '>=', $attendance->date)
+                ->first();
+
+            $leave_status = $leave_for_today->status ?? null;
+
+            // আজকের জন্য প্রযোজ্য holiday
+            $holiday_for_today = Holiday::whereDate('date', $attendance->date)->first();
+            $is_holiday = $holiday_for_today ? true : false;
+
+            // চূড়ান্ত Status নির্ধারণ
+            if ($is_holiday) {
+                $attendance->final_status = 'Holiday';
+            } elseif ($leave_status === 'Approved') {
+                $attendance->final_status = 'Leave';
+            } elseif (in_array($leave_status, ['Pending', 'Rejected'])) {
+                $attendance->final_status = 'Absent';
+            } else {
+                $attendance->final_status = $attendance->status; // Present, Late, etc.
+            }
+
+            // Flag for frontend (optional)
+            $attendance->holiday = $is_holiday;
+            $attendance->is_on_leave = $leave_status === 'Approved';
             $attendance->is_late = $attendance->status === 'Late';
+
             return $attendance;
         });
 
-        // Summary
+
+        // Summary (final_status দিয়ে গণনা)
         $summary = [
-            'Present' => $attendances->where('status', 'Present')->count(),
-            'Absent'  => $attendances->where('status', 'Absent')->count(),
-            'Late'    => $attendances->where('status', 'Late')->count(),
-            'Leave'   => $attendances->where('status', 'Leave')->count(),
-            'Holiday' => $attendances->where('status', 'Holiday')->count(),
+            'Present' => $attendances->getCollection()->where('final_status', 'Present')->count(),
+            'Absent'  => $attendances->getCollection()->where('final_status', 'Absent')->count(),
+            'Late'    => $attendances->getCollection()->where('final_status', 'Late')->count(),
+            'Leave'   => $attendances->getCollection()->where('final_status', 'Leave')->count(),
+            'Holiday' => $attendances->getCollection()->where('final_status', 'Holiday')->count(),
         ];
 
         return Inertia::render('Institute-Managements/Student-Attendance/ViewStudentAttendance', [
@@ -84,7 +110,6 @@ class StudentAttendanceController extends Controller
             'summary' => $summary,
         ]);
     }
-
 
 
 
