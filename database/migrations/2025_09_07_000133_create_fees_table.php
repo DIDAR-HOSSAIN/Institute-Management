@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('fee_types', function (Blueprint $table) {
+        Schema::create('fees', function (Blueprint $table) {
             $table->id();
-            $table->string('fee_type'); // e.g. Admission Fee, Monthly Fee
+            $table->string('name'); // Admission Fee, Tuition Fee, Exam Fee
+            $table->decimal('amount', 10, 2);
+            $table->enum('type', ['one_time', 'monthly', 'term']);
             $table->timestamps();
         });
     }
@@ -23,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('fee_types');
+        Schema::dropIfExists('fees');
     }
 };

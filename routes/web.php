@@ -23,6 +23,7 @@ use App\Http\Controllers\SectionController;
 use App\Http\Controllers\SliderController;
 use App\Http\Controllers\StudentAttendanceController;
 use App\Http\Controllers\StudentController;
+use App\Http\Controllers\StudentFeeController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -67,6 +68,8 @@ Route::resource('sections', SectionController::class);
 Route::resource('class-schedule', ClassScheduleController::class);
 Route::resource('holidays', HolidayController::class);
 Route::resource('leaves', LeaveController::class);
+Route::resource('student-fees', StudentFeeController::class);
+
 // Show the page
 Route::get('/attendance/sync/create', [StudentAttendanceController::class, 'syncCreate']);
 

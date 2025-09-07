@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\FeeType;
-use App\Http\Requests\StoreFeeTypeRequest;
-use App\Http\Requests\UpdateFeeTypeRequest;
+use App\Models\Fee;
+use App\Http\Requests\StoreFeeRequest;
+use App\Http\Requests\UpdateFeeRequest;
 
-class FeeTypeController extends Controller
+class FeeController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -27,7 +27,7 @@ class FeeTypeController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreFeeTypeRequest $request)
+    public function store(StoreFeeRequest $request)
     {
         //
     }
@@ -35,7 +35,7 @@ class FeeTypeController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(FeeType $feeType)
+    public function show(Fee $fee)
     {
         //
     }
@@ -43,7 +43,7 @@ class FeeTypeController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(FeeType $feeType)
+    public function edit(Fee $fee)
     {
         //
     }
@@ -51,7 +51,7 @@ class FeeTypeController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateFeeTypeRequest $request, FeeType $feeType)
+    public function update(UpdateFeeRequest $request, Fee $fee)
     {
         //
     }
@@ -59,7 +59,7 @@ class FeeTypeController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(FeeType $feeType)
+    public function destroy(Fee $fee)
     {
         //
     }

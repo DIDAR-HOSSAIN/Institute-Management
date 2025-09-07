@@ -9,15 +9,26 @@ class StudentFee extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['student_id', 'fee_type_id', 'amount', 'payment_date'];
+    protected $fillable = [
+        'student_id',
+        'fee_id',
+        'paid_amount',
+        'payment_method',
+        'payment_date',
+        'months'
+    ];
+
+    protected $casts = [
+        'months' => 'array', // Auto cast JSON to array
+    ];
 
     public function student()
     {
         return $this->belongsTo(Student::class);
     }
 
-    public function feeType()
+    public function fee()
     {
-        return $this->belongsTo(FeeType::class);
+        return $this->belongsTo(Fee::class);
     }
 }

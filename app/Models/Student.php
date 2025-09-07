@@ -58,4 +58,9 @@ class Student extends Model
         return $this->hasMany(Leave::class);
     }
 
+    public function studentFees()
+    {
+        return $this->hasMany(StudentFee::class);
+    }
+
 }
