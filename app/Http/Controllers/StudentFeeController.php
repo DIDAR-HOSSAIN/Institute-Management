@@ -16,7 +16,13 @@ class StudentFeeController extends Controller
      */
     public function index()
     {
-        //
+        $studentFees = StudentFee::with(['student', 'fee'])
+            ->orderBy('id', 'desc')
+            ->get();
+
+        return Inertia::render('Institute-Managements/StudentFee/ViewStudentFee', [
+            'studentFees' => $studentFees,
+        ]);
     }
 
     /**
@@ -56,6 +62,7 @@ class StudentFeeController extends Controller
 
         $fee = Fee::findOrFail($request->fee_id);
 
+        // ✅ One-time fee case
         if ($fee->type === 'one_time') {
             $alreadyPaid = StudentFee::where('student_id', $request->student_id)
                 ->where('fee_id', $fee->id)
@@ -73,27 +80,31 @@ class StudentFeeController extends Controller
                 'months'         => null,
                 'payment_date'   => now(),
             ]);
-        } else {
+        }
+        // ✅ Monthly/Term fees case
+        else {
             if (empty($request->months)) {
                 return back()->withErrors(['months' => 'Please select at least one month or term for this fee.']);
             }
 
-            foreach ($request->months as $month) {
-                $alreadyPaid = StudentFee::where('student_id', $request->student_id)
-                    ->where('fee_id', $fee->id)
-                    ->whereJsonContains('months', $month)
-                    ->exists();
+            // আগে থেকে যেসব মাস Paid আছে সেগুলো বাদ দিয়ে নেব
+            $alreadyPaidMonths = StudentFee::where('student_id', $request->student_id)
+                ->where('fee_id', $fee->id)
+                ->pluck('months')
+                ->flatten()
+                ->toArray();
 
-                if (!$alreadyPaid) {
-                    StudentFee::create([
-                        'student_id'     => $request->student_id,
-                        'fee_id'         => $fee->id,
-                        'paid_amount'    => $fee->amount,
-                        'payment_method' => $request->payment_method,
-                        'months'         => [$month],
-                        'payment_date'   => now(),
-                    ]);
-                }
+            $newMonths = array_diff($request->months, $alreadyPaidMonths);
+
+            if (count($newMonths) > 0) {
+                StudentFee::create([
+                    'student_id'     => $request->student_id,
+                    'fee_id'         => $fee->id,
+                    'paid_amount'    => $fee->amount * count($newMonths), // ✅ একসাথে মোট টাকা
+                    'payment_method' => $request->payment_method,
+                    'months'         => $newMonths, // ✅ এক row তে সব মাস array আকারে সেভ হবে
+                    'payment_date'   => now(),
+                ]);
             }
         }
 
@@ -113,7 +124,11 @@ class StudentFeeController extends Controller
      */
     public function edit(StudentFee $studentFee)
     {
-        //
+        return Inertia::render('Institute-Managements/StudentFee/EditStudentFee', [
+            'students' => Student::select('id', 'student_name', 'roll_number')->get(),
+            'fees' => Fee::all(),
+            'studentFee' => $studentFee,
+        ]);
     }
 
     /**
@@ -121,7 +136,50 @@ class StudentFeeController extends Controller
      */
     public function update(UpdateStudentFeeRequest $request, StudentFee $studentFee)
     {
-        //
+        $request->validate([
+            'student_id'     => 'required|exists:students,id',
+            'fee_id'         => 'required|exists:fees,id',
+            'paid_amount'    => 'required|numeric|min:0',
+            'payment_method' => 'required|string|in:Cash,Bkash,Bank',
+            'months'         => 'nullable|array',
+        ]);
+
+        $fee = Fee::findOrFail($request->fee_id);
+
+        if ($fee->type === 'one_time') {
+            $alreadyPaid = StudentFee::where('student_id', $request->student_id)
+                ->where('fee_id', $fee->id)
+                ->where('id', '!=', $studentFee->id) // নিজেরটা বাদ দিয়ে চেক
+                ->exists();
+
+            if ($alreadyPaid) {
+                return back()->withErrors(['fee_id' => 'This one-time fee is already paid!']);
+            }
+
+            $studentFee->update([
+                'student_id'     => $request->student_id,
+                'fee_id'         => $fee->id,
+                'paid_amount'    => $request->paid_amount,
+                'payment_method' => $request->payment_method,
+                'months'         => null,
+                'payment_date'   => now(),
+            ]);
+        } else {
+            if (empty($request->months)) {
+                return back()->withErrors(['months' => 'Please select at least one month or term for this fee.']);
+            }
+
+            $studentFee->update([
+                'student_id'     => $request->student_id,
+                'fee_id'         => $fee->id,
+                'paid_amount'    => $request->paid_amount,
+                'payment_method' => $request->payment_method,
+                'months'         => $request->months,
+                'payment_date'   => now(),
+            ]);
+        }
+
+        return redirect()->route('student-fees.create')->with('success', 'Fee updated successfully!');
     }
 
     /**
