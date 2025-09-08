@@ -11,13 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('student_fee_payments', function (Blueprint $table) {
+        Schema::create('class_fees', function (Blueprint $table) {
             $table->id();
-            $table->integer('student_fee_id');
-            $table->decimal('paid_amount', 10, 2);
-            $table->enum('payment_method', ['Cash', 'Bkash', 'Bank']);
-            $table->json('months')->nullable();
-            $table->date('payment_date');
+            $table->integer('class_id');
+            $table->integer('fee_id');
+            $table->decimal('amount', 10, 2);
             $table->timestamps();
         });
     }
@@ -27,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('student_fee_payments');
+        Schema::dropIfExists('class_fees');
     }
 };

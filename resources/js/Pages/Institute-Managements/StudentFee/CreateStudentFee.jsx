@@ -1,156 +1,119 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useForm } from "@inertiajs/react";
 
-const allMonths = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
-];
-
-const examTerms = ["1st Terminal", "2nd Terminal", "3rd Terminal"];
-
-const CreateStudentFee = ({ students, fees, paidMonths }) => {
-    const { data, setData, post, processing, reset } = useForm({
+const CreateStudentFee = ({ students, fees }) => {
+    const { data, setData, post, processing, errors } = useForm({
         student_id: "",
         fee_id: "",
-        months: [],
-        paid_amount: 0,
+        amount: "",
         payment_method: "Cash",
+        class_name: "",
     });
 
-    const [selectedFee, setSelectedFee] = useState(null);
-    const [alreadyPaid, setAlreadyPaid] = useState([]);
+    // যখন student সিলেক্ট করবো, তখন তার class অটো আসবে
+    const handleStudentChange = (e) => {
+        const studentId = e.target.value;
+        setData("student_id", studentId);
 
-    // Update selected fee
-    const handleFeeChange = (feeId) => {
-        const fee = fees.find(f => f.id == feeId);
-        setSelectedFee(fee);
+        const selectedStudent = students.find((s) => s.id == studentId);
+        if (selectedStudent) {
+            setData("class_name", selectedStudent.schoolClass?.name || "");
+        } else {
+            setData("class_name", "");
+        }
+    };
+
+    // যখন fee সিলেক্ট করবো, তখন amount অটো আসবে
+    const handleFeeChange = (e) => {
+        const feeId = e.target.value;
         setData("fee_id", feeId);
-        setData("months", []);
-        if (fee) {
-            setData("paid_amount", fee.type === "one_time" ? fee.amount : 0);
-        }
-    };
 
-    // Update selected months/terms
-    const handleMonthChange = (value) => {
-        let newMonths = [...data.months];
-        if (newMonths.includes(value)) {
-            newMonths = newMonths.filter(m => m !== value);
-        } else {
-            newMonths.push(value);
-        }
-        setData("months", newMonths);
-
+        const selectedFee = fees.find((f) => f.id == feeId);
         if (selectedFee) {
-            setData("paid_amount", selectedFee.amount * newMonths.length);
+            setData("amount", selectedFee.amount);
+        } else {
+            setData("amount", "");
         }
     };
-
-    // Update already paid months/terms on student select
-    useEffect(() => {
-        if (data.student_id && selectedFee) {
-            const studentPaid = paidMonths[data.student_id] || {};
-            const feePaid = studentPaid[selectedFee.id] || [];
-            setAlreadyPaid(feePaid);
-        } else {
-            setAlreadyPaid([]);
-        }
-        setData("months", []);
-        if (selectedFee?.type === "one_time") setData("paid_amount", selectedFee?.amount || 0);
-        else setData("paid_amount", 0);
-    }, [data.student_id, selectedFee]);
 
     const submit = (e) => {
         e.preventDefault();
-        post(route("student-fees.store"), {
-            onSuccess: () => reset()
-        });
+        post(route("student-fees.store"));
     };
 
     return (
-        <div className="max-w-3xl mx-auto p-4">
-            <h1 className="text-2xl font-bold mb-4">💰 Student Fee Collection</h1>
-            <form onSubmit={submit} className="space-y-4">
+        <div className="max-w-2xl mx-auto p-6 bg-white rounded-xl shadow-md">
+            <h2 className="text-xl font-bold mb-4">💰 Collect Fee</h2>
 
-                {/* Student Select */}
+            <form onSubmit={submit} className="space-y-4">
+                {/* Student */}
                 <div>
-                    <label className="block font-semibold mb-1">Select Student</label>
+                    <label className="block font-medium">Student</label>
                     <select
                         value={data.student_id}
-                        onChange={(e) => setData("student_id", e.target.value)}
-                        className="border rounded px-3 py-2 w-full"
-                        required
+                        onChange={handleStudentChange}
+                        className="w-full border rounded p-2"
                     >
                         <option value="">-- Select Student --</option>
-                        {students.map(s => (
-                            <option key={s.id} value={s.id}>
-                                {s.student_name} ({s.roll_number})
+                        {students.map((student) => (
+                            <option key={student.id} value={student.id}>
+                                {student.student_name}
                             </option>
                         ))}
                     </select>
+                    {errors.student_id && <div className="text-red-600">{errors.student_id}</div>}
                 </div>
 
-                {/* Fee Select */}
-                <div>
-                    <label className="block font-semibold mb-1">Select Fee</label>
-                    <select
-                        value={data.fee_id}
-                        onChange={(e) => handleFeeChange(e.target.value)}
-                        className="border rounded px-3 py-2 w-full"
-                        required
-                    >
-                        <option value="">-- Select Fee --</option>
-                        {fees.map(f => (
-                            <option key={f.id} value={f.id}>
-                                {f.name} ({f.type}) - ৳{f.amount}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
-                {/* Months / Terms Selection */}
-                {selectedFee && selectedFee.type !== "one_time" && (
+                {/* Auto Show Class */}
+                {data.class_name && (
                     <div>
-                        <label className="block font-semibold mb-1">
-                            {selectedFee.type === "monthly" ? "Select Months" : "Select Terms"}
-                        </label>
-                        <div className="grid grid-cols-3 gap-2">
-                            {(selectedFee.type === "monthly" ? allMonths : examTerms).map((item) => (
-                                <label key={item} className="flex items-center space-x-1">
-                                    <input
-                                        type="checkbox"
-                                        value={item}
-                                        checked={data.months.includes(item)}
-                                        onChange={() => handleMonthChange(item)}
-                                        disabled={alreadyPaid.includes(item)}
-                                    />
-                                    <span className={alreadyPaid.includes(item) ? "line-through text-gray-400" : ""}>
-                                        {item} {alreadyPaid.includes(item) ? "(Paid)" : ""}
-                                    </span>
-                                </label>
-                            ))}
-                        </div>
+                        <label className="block font-medium">Class</label>
+                        <input
+                            type="text"
+                            value={data.class_name}
+                            readOnly
+                            className="w-full border rounded p-2 bg-gray-100"
+                        />
                     </div>
                 )}
 
-                {/* Paid Amount */}
+                {/* Fee Type */}
                 <div>
-                    <label className="block font-semibold mb-1">Paid Amount</label>
+                    <label className="block font-medium">Fee Type</label>
+                    <select
+                        value={data.fee_id}
+                        onChange={handleFeeChange}
+                        className="w-full border rounded p-2"
+                    >
+                        <option value="">-- Select Fee --</option>
+                        {fees.map((fee) => (
+                            <option key={fee.id} value={fee.id}>
+                                {fee.name} ({fee.type})
+                            </option>
+                        ))}
+                    </select>
+                    {errors.fee_id && <div className="text-red-600">{errors.fee_id}</div>}
+                </div>
+
+                {/* Amount */}
+                <div>
+                    <label className="block font-medium">Amount</label>
                     <input
                         type="number"
-                        value={data.paid_amount}
-                        readOnly
-                        className="border rounded px-3 py-2 w-full bg-gray-100"
+                        value={data.amount}
+                        onChange={(e) => setData("amount", e.target.value)}
+                        className="w-full border rounded p-2"
                     />
+                    {errors.amount && <div className="text-red-600">{errors.amount}</div>}
                 </div>
 
                 {/* Payment Method */}
                 <div>
-                    <label className="block font-semibold mb-1">Payment Method</label>
+                    <label className="block font-medium">Payment Method</label>
                     <select
                         value={data.payment_method}
                         onChange={(e) => setData("payment_method", e.target.value)}
-                        className="border rounded px-3 py-2 w-full"
+                        className="w-full border rounded p-2"
                     >
                         <option value="Cash">Cash</option>
                         <option value="Bkash">Bkash</option>
@@ -158,12 +121,13 @@ const CreateStudentFee = ({ students, fees, paidMonths }) => {
                     </select>
                 </div>
 
+                {/* Submit */}
                 <button
                     type="submit"
                     disabled={processing}
-                    className="bg-blue-500 text-white px-4 py-2 rounded"
+                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
                 >
-                    {processing ? "Saving..." : "Save Fees"}
+                    Save Payment
                 </button>
             </form>
         </div>

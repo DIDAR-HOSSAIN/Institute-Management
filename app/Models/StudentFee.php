@@ -9,27 +9,34 @@ class StudentFee extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'student_id',
-        'fee_id',
-        'paid_amount',
-        'payment_method',
-        'payment_date',
-        'months'
-    ];
+    protected $fillable = ['student_id', 'class_fee_id', 'paid_amount', 'payment_method', 'payment_history', 'payment_date'];
 
     protected $casts = [
-        'months' => 'array', // Auto cast JSON to array
+        'months' => 'array',
+        'payment_date' => 'date',
+        'payment_history' => 'array'
     ];
 
+    // Fee type (Admission, Tuition, Exam)
+    public function fee()
+    {
+        return $this->belongsTo(Fee::class);
+    }
+
+    // Payment history
+    public function payments()
+    {
+        return $this->hasMany(StudentFeePayment::class);
+    }
 
     public function student()
     {
         return $this->belongsTo(Student::class);
     }
 
-    public function fee()
+    public function classFee()
     {
-        return $this->belongsTo(Fee::class);
+        return $this->belongsTo(ClassFee::class);
     }
+
 }

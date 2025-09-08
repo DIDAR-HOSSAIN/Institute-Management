@@ -1,101 +1,38 @@
-import React from "react";
-import { Link, usePage, router } from "@inertiajs/react";
+import { Link } from '@inertiajs/react';
 
-const ViewStudentFee = () => {
-    const { studentFees } = usePage().props;
-
-    const handleDelete = (id) => {
-        if (confirm("Are you sure you want to delete this record?")) {
-            router.delete(route("student-fees.destroy", id));
-        }
-    };
-
-    // Group fees by student
-    const feesByStudent = studentFees.reduce((acc, fee) => {
-        if (!acc[fee.student_id]) acc[fee.student_id] = [];
-        acc[fee.student_id].push(fee);
-        return acc;
-    }, {});
-
+const ViewStudentFee = ({ studentFees }) => {
     return (
-        <div className="max-w-6xl mx-auto p-6">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold">📋 Student Fee Records</h1>
-                <Link
-                    href={route("student-fees.create")}
-                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                >
-                    + Add Fee
-                </Link>
-            </div>
+        <div className="p-6">
+            <h1 className="text-xl font-bold mb-4">Student Fees</h1>
 
-            <div className="overflow-x-auto bg-white shadow rounded-lg">
-                <table className="w-full border-collapse">
-                    <thead>
-                        <tr className="bg-gray-100 text-left">
-                            <th className="border px-4 py-2">#</th>
-                            <th className="border px-4 py-2">Student</th>
-                            <th className="border px-4 py-2">Fee</th>
-                            <th className="border px-4 py-2">Paid Amount</th>
-                            <th className="border px-4 py-2">Months/Terms</th>
-                            <th className="border px-4 py-2">Payment Method</th>
-                            <th className="border px-4 py-2">Payment Date</th>
-                            <th className="border px-4 py-2">Action</th>
+            <Link href={route('student-fees.create')} className="px-4 py-2 bg-blue-600 text-white rounded">
+                + Add Student Fee
+            </Link>
+
+            <table className="mt-6 w-full border">
+                <thead>
+                    <tr className="bg-gray-100">
+                        <th className="border px-3 py-2">Student</th>
+                        <th className="border px-3 py-2">Fee</th>
+                        <th className="border px-3 py-2">Total Paid</th>
+                        <th className="border px-3 py-2">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {studentFees.map((sf) => (
+                        <tr key={sf.id}>
+                            <td className="border px-3 py-2">{sf.student?.name} ({sf.student_id})</td>
+                            <td className="border px-3 py-2">{sf.fee?.name}</td>
+                            <td className="border px-3 py-2">{sf.paid_amount}</td>
+                            <td className="border px-3 py-2">
+                                <Link href={route('student-fees.show', sf.id)} className="text-blue-600 underline">
+                                    View
+                                </Link>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        {studentFees.length > 0 ? (
-                            Object.entries(feesByStudent).map(([studentId, fees], sIndex) =>
-                                fees.map((fee, index) => (
-                                    <tr key={fee.id} className="hover:bg-gray-50">
-                                        <td className="border px-4 py-2">
-                                            {sIndex + 1}.{index + 1}
-                                        </td>
-                                        <td className="border px-4 py-2">
-                                            {fee.student?.student_name} ({fee.student?.roll_number})
-                                        </td>
-                                        <td className="border px-4 py-2">
-                                            {fee.fee?.name} ({fee.fee?.type})
-                                        </td>
-                                        <td className="border px-4 py-2">৳{fee.paid_amount}</td>
-                                        <td className="border px-4 py-2">
-                                            {fee.months && Array.isArray(fee.months)
-                                                ? fee.months.join(", ")
-                                                : "-"}
-                                        </td>
-                                        <td className="border px-4 py-2">{fee.payment_method}</td>
-                                        <td className="border px-4 py-2">
-                                            {fee.payment_date
-                                                ? new Date(fee.payment_date).toLocaleDateString()
-                                                : "-"}
-                                        </td>
-                                        <td className="border px-4 py-2 space-x-2">
-                                            <Link
-                                                href={route("student-fees.editAll", studentId)}
-                                                className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
-                                            >
-                                                Edit All
-                                            </Link>
-                                            <button
-                                                onClick={() => handleDelete(fee.id)}
-                                                className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-                                            >
-                                                Delete
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))
-                            )
-                        ) : (
-                            <tr>
-                                <td colSpan="8" className="text-center text-gray-500 py-4">
-                                    No records found
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
-            </div>
+                    ))}
+                </tbody>
+            </table>
         </div>
     );
 };
