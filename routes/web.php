@@ -69,13 +69,16 @@ Route::resource('class-schedule', ClassScheduleController::class);
 Route::resource('holidays', HolidayController::class);
 Route::resource('leaves', LeaveController::class);
 // Student-wise edit all fees
+Route::get('student-fees/create/{studentId}', [StudentFeeController::class, 'create'])
+->name('student-fees.create.for-student');
+
 Route::get('/student-fees/{student}/edit-all', [StudentFeeController::class, 'editAll'])
     ->name('student-fees.editAll');
 
 // Update all fees for a student
 Route::put('/student-fees/{student}/update-all', [StudentFeeController::class, 'updateAll'])
     ->name('student-fees.updateAll');
-
+    
 Route::resource('student-fees', StudentFeeController::class);
 
 // Show the page

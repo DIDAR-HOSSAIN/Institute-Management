@@ -13,9 +13,8 @@ return new class extends Migration
     {
         Schema::create('fees', function (Blueprint $table) {
             $table->id();
-            $table->string('name'); // Admission Fee, Tuition Fee, Exam Fee
-            $table->decimal('amount', 10, 2);
-            $table->enum('type', ['one_time', 'monthly', 'term']);
+            $table->string('name');
+            $table->string('type');
             $table->timestamps();
         });
     }

@@ -16,7 +16,7 @@ return new class extends Migration
             $table->integer('student_fee_id');
             $table->decimal('paid_amount', 10, 2);
             $table->enum('payment_method', ['Cash', 'Bkash', 'Bank']);
-            $table->json('months')->nullable();
+            $table->string('month')->nullable();
             $table->date('payment_date');
             $table->timestamps();
         });

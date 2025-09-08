@@ -14,11 +14,11 @@ return new class extends Migration
         Schema::create('student_fees', function (Blueprint $table) {
             $table->id();
             $table->string('student_id');
-            $table->string('fee_id');
-            $table->decimal('paid_amount', 10, 2)->default(0);
+            $table->string('class_fee_id');
+            $table->decimal('total_paid', 10, 2)->default(0);
             $table->enum('payment_method', ['Cash', 'Bkash', 'Bank']);
-            $table->date('payment_date');
-            $table->json('months')->nullable(); // Tuition Fee / Term Fee
+            $table->json('months')->nullable();
+            $table->date('last_payment_date');
             $table->timestamps();
         });
     }

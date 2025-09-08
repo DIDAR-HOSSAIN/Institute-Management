@@ -16,13 +16,13 @@ class ClassFee extends Model
         return $this->belongsTo(SchoolClass::class);
     }
 
-    public function fee()
-    {
-        return $this->belongsTo(Fee::class);
-    }
-
     public function studentFees()
     {
         return $this->hasMany(StudentFee::class);
+    }
+
+    public function fee()
+    {
+        return $this->belongsTo(Fee::class);
     }
 }
