@@ -22,6 +22,7 @@ class StudentFee extends Model
         'months' => 'array', // Auto cast JSON to array
     ];
 
+
     public function student()
     {
         return $this->belongsTo(Student::class);
