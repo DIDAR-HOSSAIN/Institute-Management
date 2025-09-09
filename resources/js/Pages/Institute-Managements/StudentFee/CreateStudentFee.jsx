@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useForm } from "@inertiajs/react";
 
-export default function CreateStudentFee({ student, fees, studentFees }) {
-    const { data, setData, post, processing, errors } = useForm({
+export default function CreateStudentFee({ student, fees = [], studentFees = [] }) {
+    const { data, setData, post, processing } = useForm({
         student_id: student.id,
         tuition_months: [],       // Recurring months
         exams: [],                // Exam fee IDs
@@ -10,44 +10,89 @@ export default function CreateStudentFee({ student, fees, studentFees }) {
         payment_method: "Cash",
     });
 
-    // Months array
+    // মাসের নাম
     const months = [
         "January", "February", "March", "April", "May", "June",
         "July", "August", "September", "October", "November", "December"
     ];
 
-    // Selected months (checkboxes)
+    // State
     const [selectedMonths, setSelectedMonths] = useState([]);
-
-    // Selected exams
     const [selectedExams, setSelectedExams] = useState([]);
+    const [paidMonths, setPaidMonths] = useState([]);
+    const [paidExams, setPaidExams] = useState([]);
+    const [admissionAlreadyPaid, setAdmissionAlreadyPaid] = useState(false);
 
-    // Admission already paid?
-    const [admissionPaid, setAdmissionPaid] = useState(false);
+    // Tuition, Exam, Admission fees বের করা
+    const tuitionFee = useMemo(
+        () => (fees || []).find(f => f?.fee?.name === "Tuition")?.amount || 0,
+        [fees]
+    );
 
-    // Populate defaults on load
+    const admissionClassFee = useMemo(
+        () => (fees || []).find(f => f?.fee?.name === "Admission"),
+        [fees]
+    );
+    const admissionAmount = Number(admissionClassFee?.amount ?? 0);
+
+    // // useEffect → পূর্বের ডাটা লোড
+    // useEffect(() => {
+    //     // Tuition paid months
+    //     const tuitionPaidMonths = studentFees
+    //         .filter(sf => sf.class_fee?.fee?.name === "Tuition")
+    //         .flatMap(sf => sf.months || []);
+    //     setPaidMonths(tuitionPaidMonths);
+
+    //     // Exams paid
+    //     const examPaid = studentFees
+    //         .filter(sf => sf.class_fee?.fee?.name === "Exam")
+    //         .map(sf => sf.class_fee?.fee_id);
+    //     setPaidExams(examPaid);
+
+    //     // Admission paid
+    //     const admissionPaid = studentFees.some(sf => sf.class_fee?.fee?.name === "Admission");
+    //     setAdmissionAlreadyPaid(admissionPaid);
+
+    //     // ডিফল্ট সেট করা
+    //     setSelectedMonths(tuitionPaidMonths);
+    //     setData("tuition_months", tuitionPaidMonths);
+
+    //     setSelectedExams(examPaid);
+    //     setData("exams", examPaid);
+
+    //     setData("admission", !admissionPaid);
+    // }, [studentFees]);
+
     useEffect(() => {
-        // Tuition months already paid
         const tuitionPaidMonths = studentFees
-            .filter(sf => sf.class_fee.fee.name === "Tuition")
+            .filter(sf => sf.class_fee?.fee?.name === "Tuition")
             .flatMap(sf => sf.months || []);
+        console.log("Paid Tuition Months:", tuitionPaidMonths); // ✅ চেক করুন
+        setPaidMonths(tuitionPaidMonths);
+
+        const examPaid = studentFees
+            .filter(sf => sf.class_fee?.fee?.name === "Exam")
+            .map(sf => sf.class_fee?.fee_id);
+        console.log("Paid Exams:", examPaid); // ✅ চেক করুন
+        setPaidExams(examPaid);
+
+        const admissionPaid = studentFees.some(sf => sf.class_fee?.fee?.name === "Admission");
+        console.log("Admission Already Paid:", admissionPaid); // ✅ চেক করুন
+        setAdmissionAlreadyPaid(admissionPaid);
+
         setSelectedMonths(tuitionPaidMonths);
         setData("tuition_months", tuitionPaidMonths);
 
-        // Exams already paid
-        const examPaid = studentFees
-            .filter(sf => sf.class_fee.fee.name === "Exam")
-            .map(sf => sf.class_fee.fee_id);
         setSelectedExams(examPaid);
         setData("exams", examPaid);
 
-        // Admission
-        const admissionAlreadyPaid = studentFees.some(sf => sf.class_fee.fee.name === "Admission");
-        setAdmissionPaid(admissionAlreadyPaid);
-        setData("admission", !admissionAlreadyPaid);
-    }, []);
+        setData("admission", !admissionPaid);
+    }, [studentFees]);
 
+
+    // Toggle Tuition Month
     const toggleMonth = (month) => {
+        if (paidMonths.includes(month)) return; // already paid
         let updated;
         if (selectedMonths.includes(month)) {
             updated = selectedMonths.filter(m => m !== month);
@@ -58,7 +103,9 @@ export default function CreateStudentFee({ student, fees, studentFees }) {
         setData("tuition_months", updated);
     };
 
+    // Toggle Exam
     const toggleExam = (feeId) => {
+        if (paidExams.includes(feeId)) return; // already paid
         let updated;
         if (selectedExams.includes(feeId)) {
             updated = selectedExams.filter(id => id !== feeId);
@@ -69,16 +116,14 @@ export default function CreateStudentFee({ student, fees, studentFees }) {
         setData("exams", updated);
     };
 
+    // Submit
     const submit = (e) => {
         e.preventDefault();
-        post(route("student-fees.store"), {
-            data
-        });
+        post(route("student-fees.store"), { data });
     };
 
-    // Total tuition amount (per month * selected months)
-    const tuitionFee = fees.find(f => f.fee.name === "Tuition")?.amount || 0;
-    const totalTuition = tuitionFee * selectedMonths.length;
+    // Tuition হিসাব
+    const totalTuition = tuitionFee * selectedMonths.filter(m => !paidMonths.includes(m)).length;
 
     return (
         <div className="max-w-4xl mx-auto p-6 bg-white rounded-xl shadow-md">
@@ -89,16 +134,21 @@ export default function CreateStudentFee({ student, fees, studentFees }) {
             <form onSubmit={submit} className="space-y-6">
                 {/* Tuition Fee */}
                 <div>
-                    <h3 className="font-semibold mb-2">Tuition Fee (per month: {tuitionFee}৳)</h3>
+                    <h3 className="font-semibold mb-2">
+                        Tuition Fee (per month: {tuitionFee}৳)
+                    </h3>
                     <div className="grid grid-cols-3 gap-2">
                         {months.map(m => (
                             <label key={m} className="flex items-center space-x-2">
                                 <input
                                     type="checkbox"
                                     checked={selectedMonths.includes(m)}
+                                    disabled={paidMonths.includes(m)}
                                     onChange={() => toggleMonth(m)}
                                 />
-                                <span>{m}</span>
+                                <span>
+                                    {m} {paidMonths.includes(m) && "(Paid)"}
+                                </span>
                             </label>
                         ))}
                     </div>
@@ -114,9 +164,13 @@ export default function CreateStudentFee({ student, fees, studentFees }) {
                                 <input
                                     type="checkbox"
                                     checked={selectedExams.includes(cf.fee.id)}
+                                    disabled={paidExams.includes(cf.fee.id)}
                                     onChange={() => toggleExam(cf.fee.id)}
                                 />
-                                <span>{cf.fee.name} - {cf.amount}৳</span>
+                                <span>
+                                    {cf.fee.name} - {cf.amount}৳{" "}
+                                    {paidExams.includes(cf.fee.id) && "(Paid)"}
+                                </span>
                             </label>
                         ))}
                     </div>
@@ -128,14 +182,18 @@ export default function CreateStudentFee({ student, fees, studentFees }) {
                     <label className="flex items-center space-x-2">
                         <input
                             type="checkbox"
-                            checked={admissionPaid || data.admission}
-                            disabled={admissionPaid}
+                            checked={admissionAlreadyPaid ? true : data.admission}
+                            disabled={admissionAlreadyPaid}
                             onChange={() => setData("admission", !data.admission)}
                         />
-                        <span>Admission Fee</span>
+                        <span>
+                            Admission - {admissionAmount}৳{" "}
+                            {admissionAlreadyPaid && "(Paid)"}
+                        </span>
                     </label>
                 </div>
 
+                {/* Submit */}
                 <button
                     type="submit"
                     disabled={processing}

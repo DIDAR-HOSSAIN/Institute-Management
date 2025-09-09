@@ -36,22 +36,49 @@ class StudentFeeController extends Controller
     {
         $student = Student::with('schoolClass')->findOrFail($studentId);
 
-        // সব ফি টেনে আনবো
+        // সব ফি
         $fees = ClassFee::with('fee')
             ->where('class_id', $student->school_class_id)
             ->get();
 
-        // Student এর paid data বের করবো
-        $studentFees = StudentFee::with('payments')
+        // Student এর paid data
+        $studentFees = StudentFee::with('classFee.fee', 'payments')
             ->where('student_id', $student->id)
             ->get();
+
+        // ==== Paid Data প্রসেস ====
+        $paidTuitionMonths = [];
+        $paidExams = [];
+        $admissionPaid = false;
+
+        foreach ($studentFees as $fee) {
+            if ($fee->classFee->fee->name === 'Tuition') {
+                $paidTuitionMonths = array_merge($paidTuitionMonths, $fee->payments->pluck('month')->filter()->toArray());
+            }
+
+            if ($fee->classFee->fee->name === 'Admission' && $fee->payments->count() > 0) {
+                $admissionPaid = true;
+            }
+
+            if ($fee->classFee->fee->type === 'exam' && $fee->payments->count() > 0) {
+                $paidExams[] = $fee->classFee->fee_id;
+            }
+        }
+
+        $paidTuitionMonths = array_unique($paidTuitionMonths);
 
         return Inertia::render('Institute-Managements/StudentFee/CreateStudentFee', [
             'student' => $student,
             'fees' => $fees,
             'studentFees' => $studentFees,
+
+            // extra data
+            'paidTuitionMonths' => $paidTuitionMonths,
+            'paidExams' => $paidExams,
+            'admissionPaid' => $admissionPaid,
         ]);
     }
+
 
 
 
