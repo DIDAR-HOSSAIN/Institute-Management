@@ -1,41 +1,84 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "@inertiajs/react";
 
-export default function CreateStudentFee({ student, fees }) {
+export default function CreateStudentFee({ student, fees, studentFees }) {
     const { data, setData, post, processing, errors } = useForm({
         student_id: student.id,
-        payments: [
-            { fee_id: "", amount: "", payment_method: "Cash", month: "" }
-        ],
+        tuition_months: [],       // Recurring months
+        exams: [],                // Exam fee IDs
+        admission: false,         // Admission paid or not
+        payment_method: "Cash",
     });
 
-    const handlePaymentChange = (index, field, value) => {
-        const updatedPayments = [...data.payments];
-        updatedPayments[index][field] = value;
+    // Months array
+    const months = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    ];
 
-        if (field === "fee_id") {
-            const fee = fees.find(f => f.fee.id === parseInt(value));
-            updatedPayments[index]["amount"] = fee ? fee.amount : "";
+    // Selected months (checkboxes)
+    const [selectedMonths, setSelectedMonths] = useState([]);
+
+    // Selected exams
+    const [selectedExams, setSelectedExams] = useState([]);
+
+    // Admission already paid?
+    const [admissionPaid, setAdmissionPaid] = useState(false);
+
+    // Populate defaults on load
+    useEffect(() => {
+        // Tuition months already paid
+        const tuitionPaidMonths = studentFees
+            .filter(sf => sf.class_fee.fee.name === "Tuition")
+            .flatMap(sf => sf.months || []);
+        setSelectedMonths(tuitionPaidMonths);
+        setData("tuition_months", tuitionPaidMonths);
+
+        // Exams already paid
+        const examPaid = studentFees
+            .filter(sf => sf.class_fee.fee.name === "Exam")
+            .map(sf => sf.class_fee.fee_id);
+        setSelectedExams(examPaid);
+        setData("exams", examPaid);
+
+        // Admission
+        const admissionAlreadyPaid = studentFees.some(sf => sf.class_fee.fee.name === "Admission");
+        setAdmissionPaid(admissionAlreadyPaid);
+        setData("admission", !admissionAlreadyPaid);
+    }, []);
+
+    const toggleMonth = (month) => {
+        let updated;
+        if (selectedMonths.includes(month)) {
+            updated = selectedMonths.filter(m => m !== month);
+        } else {
+            updated = [...selectedMonths, month];
         }
-
-        setData("payments", updatedPayments);
+        setSelectedMonths(updated);
+        setData("tuition_months", updated);
     };
 
-    const addPaymentRow = () => {
-        setData("payments", [
-            ...data.payments,
-            { fee_id: "", amount: "", payment_method: "Cash", month: "" },
-        ]);
-    };
-
-    const removePaymentRow = (index) => {
-        setData("payments", data.payments.filter((_, i) => i !== index));
+    const toggleExam = (feeId) => {
+        let updated;
+        if (selectedExams.includes(feeId)) {
+            updated = selectedExams.filter(id => id !== feeId);
+        } else {
+            updated = [...selectedExams, feeId];
+        }
+        setSelectedExams(updated);
+        setData("exams", updated);
     };
 
     const submit = (e) => {
         e.preventDefault();
-        post(route("student-fees.store"));
+        post(route("student-fees.store"), {
+            data
+        });
     };
+
+    // Total tuition amount (per month * selected months)
+    const tuitionFee = fees.find(f => f.fee.name === "Tuition")?.amount || 0;
+    const totalTuition = tuitionFee * selectedMonths.length;
 
     return (
         <div className="max-w-4xl mx-auto p-6 bg-white rounded-xl shadow-md">
@@ -43,81 +86,55 @@ export default function CreateStudentFee({ student, fees }) {
             <p><strong>Student:</strong> {student.student_name}</p>
             <p className="mb-4"><strong>Class:</strong> {student.school_class?.class_name}</p>
 
-            <form onSubmit={submit} className="space-y-4">
-                {data.payments.map((payment, index) => (
-                    <div key={index} className="grid grid-cols-12 gap-2 items-end">
-                        <div className="col-span-3">
-                            <label className="block font-medium">Fee Type</label>
-                            <select
-                                value={payment.fee_id}
-                                onChange={(e) => handlePaymentChange(index, "fee_id", e.target.value)}
-                                className="w-full border rounded p-2"
-                            >
-                                <option value="">-- Select Fee --</option>
-                                {fees.map((cf) => (
-                                    <option key={cf.fee.id} value={cf.fee.id}>
-                                        {cf.fee.name} ({cf.fee.type})
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div className="col-span-2">
-                            <label className="block font-medium">Month</label>
-                            <select
-                                value={payment.month}
-                                onChange={(e) => handlePaymentChange(index, "month", e.target.value)}
-                                className="w-full border rounded p-2"
-                            >
-                                <option value="">-- Select Month --</option>
-                                {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map(m => (
-                                    <option key={m} value={m}>{m}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div className="col-span-2">
-                            <label className="block font-medium">Amount</label>
-                            <input
-                                type="number"
-                                value={payment.amount}
-                                onChange={(e) => handlePaymentChange(index, "amount", e.target.value)}
-                                className="w-full border rounded p-2"
-                            />
-                        </div>
-
-                        <div className="col-span-3">
-                            <label className="block font-medium">Payment Method</label>
-                            <select
-                                value={payment.payment_method}
-                                onChange={(e) => handlePaymentChange(index, "payment_method", e.target.value)}
-                                className="w-full border rounded p-2"
-                            >
-                                <option value="Cash">Cash</option>
-                                <option value="Bkash">Bkash</option>
-                                <option value="Bank">Bank</option>
-                            </select>
-                        </div>
-
-                        <div className="col-span-2">
-                            {index > 0 && (
-                                <button type="button"
-                                    onClick={() => removePaymentRow(index)}
-                                    className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700">
-                                    Remove
-                                </button>
-                            )}
-                        </div>
+            <form onSubmit={submit} className="space-y-6">
+                {/* Tuition Fee */}
+                <div>
+                    <h3 className="font-semibold mb-2">Tuition Fee (per month: {tuitionFee}৳)</h3>
+                    <div className="grid grid-cols-3 gap-2">
+                        {months.map(m => (
+                            <label key={m} className="flex items-center space-x-2">
+                                <input
+                                    type="checkbox"
+                                    checked={selectedMonths.includes(m)}
+                                    onChange={() => toggleMonth(m)}
+                                />
+                                <span>{m}</span>
+                            </label>
+                        ))}
                     </div>
-                ))}
+                    <p className="mt-1 font-medium">Total Tuition: {totalTuition}৳</p>
+                </div>
 
-                <button
-                    type="button"
-                    onClick={addPaymentRow}
-                    className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-                >
-                    + Add Fee
-                </button>
+                {/* Exam Fees */}
+                <div>
+                    <h3 className="font-semibold mb-2">Exam Fees</h3>
+                    <div className="grid grid-cols-2 gap-2">
+                        {fees.filter(f => f.fee.name === "Exam").map(cf => (
+                            <label key={cf.fee.id} className="flex items-center space-x-2">
+                                <input
+                                    type="checkbox"
+                                    checked={selectedExams.includes(cf.fee.id)}
+                                    onChange={() => toggleExam(cf.fee.id)}
+                                />
+                                <span>{cf.fee.name} - {cf.amount}৳</span>
+                            </label>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Admission Fee */}
+                <div>
+                    <h3 className="font-semibold mb-2">Admission Fee</h3>
+                    <label className="flex items-center space-x-2">
+                        <input
+                            type="checkbox"
+                            checked={admissionPaid || data.admission}
+                            disabled={admissionPaid}
+                            onChange={() => setData("admission", !data.admission)}
+                        />
+                        <span>Admission Fee</span>
+                    </label>
+                </div>
 
                 <button
                     type="submit"

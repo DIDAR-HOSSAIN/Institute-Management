@@ -36,17 +36,22 @@ class StudentFeeController extends Controller
     {
         $student = Student::with('schoolClass')->findOrFail($studentId);
 
+        // সব ফি টেনে আনবো
         $fees = ClassFee::with('fee')
             ->where('class_id', $student->school_class_id)
+            ->get();
+
+        // Student এর paid data বের করবো
+        $studentFees = StudentFee::with('payments')
+            ->where('student_id', $student->id)
             ->get();
 
         return Inertia::render('Institute-Managements/StudentFee/CreateStudentFee', [
             'student' => $student,
             'fees' => $fees,
+            'studentFees' => $studentFees,
         ]);
     }
-
-
 
 
 
@@ -57,64 +62,135 @@ class StudentFeeController extends Controller
     {
         $student = Student::findOrFail($request->student_id);
 
-        foreach ($request->payments as $payment) {
+        // Payment method default
+        $paymentMethod = $request->payment_method ?? 'Cash';
+
+        // Tuition (Recurring)
+        if (!empty($request->tuition_months)) {
             $classFee = ClassFee::with('fee')
                 ->where('class_id', $student->school_class_id)
-                ->where('fee_id', $payment['fee_id'])
+                ->whereHas('fee', fn($q) => $q->where('name', 'Tuition'))
                 ->first();
 
-            if (!$classFee) continue;
+            if ($classFee) {
+                // StudentFee main record
+                $studentFee = StudentFee::firstOrCreate(
+                    [
+                        'student_id'   => $student->id,
+                        'class_fee_id' => $classFee->id,
+                    ],
+                    [
+                        'total_paid'        => 0,
+                        'months'            => [],
+                        'payment_method'    => $paymentMethod,
+                        'last_payment_date' => now(),
+                    ]
+                );
 
-            // One-time or recurring fee
-            $studentFee = StudentFee::firstOrCreate([
-                'student_id' => $student->id,
-                'class_fee_id' => $classFee->id,
-            ], [
-                'total_paid' => 0,
-                'months' => [],
-                'payment_method' => $payment['method'] ?? 'Cash',
-                'last_payment_date' => now(),
-            ]);
+                foreach ($request->tuition_months as $month) {
+                    // Skip if already paid
+                    if (!StudentFeePayment::where('student_fee_id', $studentFee->id)
+                        ->where('month', $month)
+                        ->exists()) {
 
-            // Handle recurring fee months
-            $months = $studentFee->months ?? [];
-            if (!empty($payment['month']) && !in_array($payment['month'], $months)) {
-                $months[] = $payment['month'];
+                        StudentFeePayment::create([
+                            'student_fee_id' => $studentFee->id,
+                            'paid_amount'    => $classFee->amount, // full amount per month
+                            'payment_method' => $paymentMethod,
+                            'month'          => $month,
+                            'payment_date'   => now(),
+                        ]);
+                    }
+                }
+
+                // Update StudentFee
+                $studentFee->update([
+                    'total_paid'        => StudentFeePayment::where('student_fee_id', $studentFee->id)->sum('paid_amount'),
+                    'months'            => StudentFeePayment::where('student_fee_id', $studentFee->id)->pluck('month')->filter()->unique()->values()->toArray(),
+                    'payment_method'    => $paymentMethod,
+                    'last_payment_date' => now(),
+                ]);
             }
+        }
 
-            // Check for one-time fee (Admission)
-            if ($classFee->fee->type === 'one_time') {
-                // Only add if not already paid
+        // Exam Fees
+        if (!empty($request->exams)) {
+            foreach ($request->exams as $examFeeId) {
+                $classFee = ClassFee::with('fee')
+                    ->where('class_id', $student->school_class_id)
+                    ->where('fee_id', $examFeeId)
+                    ->first();
+
+                if ($classFee) {
+                    $studentFee = StudentFee::firstOrCreate(
+                        [
+                            'student_id'   => $student->id,
+                            'class_fee_id' => $classFee->id,
+                        ],
+                        [
+                            'total_paid'        => 0,
+                            'months'            => [],
+                            'payment_method'    => $paymentMethod,
+                            'last_payment_date' => now(),
+                        ]
+                    );
+
+                    if (!StudentFeePayment::where('student_fee_id', $studentFee->id)->exists()) {
+                        StudentFeePayment::create([
+                            'student_fee_id' => $studentFee->id,
+                            'paid_amount'    => $classFee->amount,
+                            'payment_method' => $paymentMethod,
+                            'month'          => null,
+                            'payment_date'   => now(),
+                        ]);
+                    }
+
+                    $studentFee->update([
+                        'total_paid'        => StudentFeePayment::where('student_fee_id', $studentFee->id)->sum('paid_amount'),
+                        'payment_method'    => $paymentMethod,
+                        'last_payment_date' => now(),
+                    ]);
+                }
+            }
+        }
+
+        // Admission Fee (One-time)
+        if ($request->admission) {
+            $classFee = ClassFee::with('fee')
+                ->where('class_id', $student->school_class_id)
+                ->whereHas('fee', fn($q) => $q->where('name', 'Admission'))
+                ->first();
+
+            if ($classFee) {
+                $studentFee = StudentFee::firstOrCreate(
+                    [
+                        'student_id'   => $student->id,
+                        'class_fee_id' => $classFee->id,
+                    ],
+                    [
+                        'total_paid'        => 0,
+                        'months'            => [],
+                        'payment_method'    => $paymentMethod,
+                        'last_payment_date' => now(),
+                    ]
+                );
+
                 if (!StudentFeePayment::where('student_fee_id', $studentFee->id)->exists()) {
                     StudentFeePayment::create([
                         'student_fee_id' => $studentFee->id,
-                        'paid_amount' => $payment['amount'],
-                        'payment_method' => $payment['method'] ?? 'Cash',
-                        'month' => null,
-                        'payment_date' => now(),
+                        'paid_amount'    => $classFee->amount,
+                        'payment_method' => $paymentMethod,
+                        'month'          => null,
+                        'payment_date'   => now(),
                     ]);
                 }
-            } else {
-                // Recurring fee: prevent duplicate month
-                if (empty($payment['month']) || !StudentFeePayment::where('student_fee_id', $studentFee->id)
-                    ->where('month', $payment['month'])->exists()) {
-                    StudentFeePayment::create([
-                        'student_fee_id' => $studentFee->id,
-                        'paid_amount' => $payment['amount'],
-                        'payment_method' => $payment['method'] ?? 'Cash',
-                        'month' => $payment['month'] ?? null,
-                        'payment_date' => now(),
-                    ]);
-                }
-            }
 
-            // Update student_fee total_paid from student_fee_payments table
-            $studentFee->update([
-                'total_paid' => StudentFeePayment::where('student_fee_id', $studentFee->id)->sum('paid_amount'),
-                'months' => $months,
-                'payment_method' => $payment['method'] ?? 'Cash',
-                'last_payment_date' => now(),
-            ]);
+                $studentFee->update([
+                    'total_paid'        => StudentFeePayment::where('student_fee_id', $studentFee->id)->sum('paid_amount'),
+                    'payment_method'    => $paymentMethod,
+                    'last_payment_date' => now(),
+                ]);
+            }
         }
 
         return back()->with('success', 'Fees recorded successfully!');
@@ -135,13 +211,13 @@ class StudentFeeController extends Controller
      */
     public function edit(StudentFee $studentFee)
     {
-       //
+        //
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateStudentFeeRequest $request, StudentFee $studentFee) 
+    public function update(UpdateStudentFeeRequest $request, StudentFee $studentFee)
     {
         //
     }

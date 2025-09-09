@@ -72,14 +72,16 @@ Route::resource('leaves', LeaveController::class);
 Route::get('student-fees/create/{studentId}', [StudentFeeController::class, 'create'])
 ->name('student-fees.create.for-student');
 
-Route::get('/student-fees/{student}/edit-all', [StudentFeeController::class, 'editAll'])
-    ->name('student-fees.editAll');
+// Student Fee Create Form
+Route::get('/student-fees/{student}/create', [StudentFeeController::class, 'create'])
+    ->name('student-fees.create');
 
-// Update all fees for a student
-Route::put('/student-fees/{student}/update-all', [StudentFeeController::class, 'updateAll'])
-    ->name('student-fees.updateAll');
-    
-Route::resource('student-fees', StudentFeeController::class);
+// Store Student Fee
+Route::post('/student-fees/store', [StudentFeeController::class, 'store'])
+    ->name('student-fees.store');
+
+
+// Route::resource('student-fees', StudentFeeController::class);
 
 // Show the page
 Route::get('/attendance/sync/create', [StudentAttendanceController::class, 'syncCreate']);
