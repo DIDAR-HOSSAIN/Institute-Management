@@ -3,14 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\StudentFee;
-use App\Http\Requests\StoreStudentFeeRequest;
 use App\Http\Requests\UpdateStudentFeeRequest;
 use App\Models\ClassFee;
 use App\Models\Fee;
 use App\Models\Student;
 use App\Models\StudentFeePayment;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class StudentFeeController extends Controller
@@ -81,147 +79,270 @@ class StudentFeeController extends Controller
 
 
 
-
     /**
      * Store a newly created resource in storage.
      */
+    // public function store(Request $request)
+    // {
+    //     $student = Student::findOrFail($request->student_id);
+
+    //     // Payment method default
+    //     $paymentMethod = $request->payment_method ?? 'Cash';
+
+    //     // Tuition (Recurring)
+    //     if (!empty($request->tuition_months)) {
+    //         $classFee = ClassFee::with('fee')
+    //             ->where('class_id', $student->school_class_id)
+    //             ->whereHas('fee', fn($q) => $q->where('name', 'Tuition'))
+    //             ->first();
+
+    //         if ($classFee) {
+    //             // StudentFee main record
+    //             $studentFee = StudentFee::firstOrCreate(
+    //                 [
+    //                     'student_id'   => $student->id,
+    //                     'class_fee_id' => $classFee->id,
+    //                 ],
+    //                 [
+    //                     'total_paid'        => 0,
+    //                     'months'            => [],
+    //                     'payment_method'    => $paymentMethod,
+    //                     'last_payment_date' => now(),
+    //                 ]
+    //             );
+
+    //             foreach ($request->tuition_months as $month) {
+    //                 // Skip if already paid
+    //                 if (!StudentFeePayment::where('student_fee_id', $studentFee->id)
+    //                     ->where('month', $month)
+    //                     ->exists()) {
+
+    //                     StudentFeePayment::create([
+    //                         'student_fee_id' => $studentFee->id,
+    //                         'paid_amount'    => $classFee->amount, // full amount per month
+    //                         'payment_method' => $paymentMethod,
+    //                         'month'          => $month,
+    //                         'payment_date'   => now(),
+    //                     ]);
+    //                 }
+    //             }
+
+    //             // Update StudentFee
+    //             $studentFee->update([
+    //                 'total_paid'        => StudentFeePayment::where('student_fee_id', $studentFee->id)->sum('paid_amount'),
+    //                 'months'            => StudentFeePayment::where('student_fee_id', $studentFee->id)->pluck('month')->filter()->unique()->values()->toArray(),
+    //                 'payment_method'    => $paymentMethod,
+    //                 'last_payment_date' => now(),
+    //             ]);
+    //         }
+    //     }
+
+    //     // Exam Fees
+    //     if (!empty($request->exams)) {
+    //         foreach ($request->exams as $examFeeId) {
+    //             $classFee = ClassFee::with('fee')
+    //                 ->where('class_id', $student->school_class_id)
+    //                 ->where('fee_id', $examFeeId)
+    //                 ->first();
+
+    //             if ($classFee) {
+    //                 $studentFee = StudentFee::firstOrCreate(
+    //                     [
+    //                         'student_id'   => $student->id,
+    //                         'class_fee_id' => $classFee->id,
+    //                     ],
+    //                     [
+    //                         'total_paid'        => 0,
+    //                         'months'            => [],
+    //                         'payment_method'    => $paymentMethod,
+    //                         'last_payment_date' => now(),
+    //                     ]
+    //                 );
+
+    //                 if (!StudentFeePayment::where('student_fee_id', $studentFee->id)->exists()) {
+    //                     StudentFeePayment::create([
+    //                         'student_fee_id' => $studentFee->id,
+    //                         'paid_amount'    => $classFee->amount,
+    //                         'payment_method' => $paymentMethod,
+    //                         'month'          => null,
+    //                         'payment_date'   => now(),
+    //                     ]);
+    //                 }
+
+    //                 $studentFee->update([
+    //                     'total_paid'        => StudentFeePayment::where('student_fee_id', $studentFee->id)->sum('paid_amount'),
+    //                     'payment_method'    => $paymentMethod,
+    //                     'last_payment_date' => now(),
+    //                 ]);
+    //             }
+    //         }
+    //     }
+
+    //     // Admission Fee (One-time)
+    //     if ($request->admission) {
+    //         $classFee = ClassFee::with('fee')
+    //             ->where('class_id', $student->school_class_id)
+    //             ->whereHas('fee', fn($q) => $q->where('name', 'Admission'))
+    //             ->first();
+
+    //         if ($classFee) {
+    //             $studentFee = StudentFee::firstOrCreate(
+    //                 [
+    //                     'student_id'   => $student->id,
+    //                     'class_fee_id' => $classFee->id,
+    //                 ],
+    //                 [
+    //                     'total_paid'        => 0,
+    //                     'months'            => [],
+    //                     'payment_method'    => $paymentMethod,
+    //                     'last_payment_date' => now(),
+    //                 ]
+    //             );
+
+    //             if (!StudentFeePayment::where('student_fee_id', $studentFee->id)->exists()) {
+    //                 StudentFeePayment::create([
+    //                     'student_fee_id' => $studentFee->id,
+    //                     'paid_amount'    => $classFee->amount,
+    //                     'payment_method' => $paymentMethod,
+    //                     'month'          => null,
+    //                     'payment_date'   => now(),
+    //                 ]);
+    //             }
+
+    //             $studentFee->update([
+    //                 'total_paid'        => StudentFeePayment::where('student_fee_id', $studentFee->id)->sum('paid_amount'),
+    //                 'payment_method'    => $paymentMethod,
+    //                 'last_payment_date' => now(),
+    //             ]);
+    //         }
+    //     }
+
+    //     return back()->with('success', 'Fees recorded successfully!');
+    // }
+
+
+
+
+
     public function store(Request $request)
-    {
-        $student = Student::findOrFail($request->student_id);
+{
+    $request->validate([
+        'student_id' => 'required|exists:students,id',
+        'tuition_months' => 'nullable|array',
+        'exams' => 'nullable|array',
+        'admission' => 'nullable|boolean',
+        'payment_method' => 'required|string|in:Cash,Bkash,Bank',
+    ]);
 
-        // Payment method default
-        $paymentMethod = $request->payment_method ?? 'Cash';
+    $student = Student::findOrFail($request->student_id);
+    $paymentMethod = $request->payment_method;
 
-        // Tuition (Recurring)
-        if (!empty($request->tuition_months)) {
-            $classFee = ClassFee::with('fee')
-                ->where('class_id', $student->school_class_id)
-                ->whereHas('fee', fn($q) => $q->where('name', 'Tuition'))
-                ->first();
+    // -------------------------------
+    // 1️⃣ Tuition Fee (Recurring)
+    // -------------------------------
+    if (!empty($request->tuition_months)) {
+        $classFee = ClassFee::with('fee')
+            ->where('class_id', $student->school_class_id)
+            ->whereHas('fee', fn($q) => $q->where('name', 'Tuition'))
+            ->first();
 
-            if ($classFee) {
-                // StudentFee main record
-                $studentFee = StudentFee::firstOrCreate(
-                    [
-                        'student_id'   => $student->id,
-                        'class_fee_id' => $classFee->id,
-                    ],
-                    [
-                        'total_paid'        => 0,
-                        'months'            => [],
-                        'payment_method'    => $paymentMethod,
-                        'last_payment_date' => now(),
-                    ]
-                );
+        if ($classFee) {
+            $studentFee = StudentFee::firstOrCreate(
+                ['student_id' => $student->id, 'class_fee_id' => $classFee->id],
+                ['total_paid' => 0, 'months' => [], 'payment_method' => $paymentMethod, 'last_payment_date' => now()]
+            );
 
-                foreach ($request->tuition_months as $month) {
-                    // Skip if already paid
-                    if (!StudentFeePayment::where('student_fee_id', $studentFee->id)
-                        ->where('month', $month)
-                        ->exists()) {
-
-                        StudentFeePayment::create([
-                            'student_fee_id' => $studentFee->id,
-                            'paid_amount'    => $classFee->amount, // full amount per month
-                            'payment_method' => $paymentMethod,
-                            'month'          => $month,
-                            'payment_date'   => now(),
-                        ]);
-                    }
-                }
-
-                // Update StudentFee
-                $studentFee->update([
-                    'total_paid'        => StudentFeePayment::where('student_fee_id', $studentFee->id)->sum('paid_amount'),
-                    'months'            => StudentFeePayment::where('student_fee_id', $studentFee->id)->pluck('month')->filter()->unique()->values()->toArray(),
-                    'payment_method'    => $paymentMethod,
-                    'last_payment_date' => now(),
-                ]);
-            }
-        }
-
-        // Exam Fees
-        if (!empty($request->exams)) {
-            foreach ($request->exams as $examFeeId) {
-                $classFee = ClassFee::with('fee')
-                    ->where('class_id', $student->school_class_id)
-                    ->where('fee_id', $examFeeId)
-                    ->first();
-
-                if ($classFee) {
-                    $studentFee = StudentFee::firstOrCreate(
-                        [
-                            'student_id'   => $student->id,
-                            'class_fee_id' => $classFee->id,
-                        ],
-                        [
-                            'total_paid'        => 0,
-                            'months'            => [],
-                            'payment_method'    => $paymentMethod,
-                            'last_payment_date' => now(),
-                        ]
-                    );
-
-                    if (!StudentFeePayment::where('student_fee_id', $studentFee->id)->exists()) {
-                        StudentFeePayment::create([
-                            'student_fee_id' => $studentFee->id,
-                            'paid_amount'    => $classFee->amount,
-                            'payment_method' => $paymentMethod,
-                            'month'          => null,
-                            'payment_date'   => now(),
-                        ]);
-                    }
-
-                    $studentFee->update([
-                        'total_paid'        => StudentFeePayment::where('student_fee_id', $studentFee->id)->sum('paid_amount'),
-                        'payment_method'    => $paymentMethod,
-                        'last_payment_date' => now(),
+            foreach ($request->tuition_months as $month) {
+                if (!StudentFeePayment::where('student_fee_id', $studentFee->id)->where('month', $month)->exists()) {
+                    StudentFeePayment::create([
+                        'student_fee_id' => $studentFee->id,
+                        'paid_amount' => $classFee->amount,
+                        'payment_method' => $paymentMethod,
+                        'month' => $month,
+                        'payment_date' => now(),
                     ]);
                 }
             }
-        }
 
-        // Admission Fee (One-time)
-        if ($request->admission) {
+            $studentFee->update([
+                'total_paid' => StudentFeePayment::where('student_fee_id', $studentFee->id)->sum('paid_amount'),
+                'months' => StudentFeePayment::where('student_fee_id', $studentFee->id)->pluck('month')->filter()->unique()->values()->toArray(),
+                'payment_method' => $paymentMethod,
+                'last_payment_date' => now(),
+            ]);
+        }
+    }
+
+    // -------------------------------
+    // 2️⃣ Exam Fees (One-time)
+    // -------------------------------
+    if (!empty($request->exams)) {
+        foreach ($request->exams as $examFeeId) {
             $classFee = ClassFee::with('fee')
                 ->where('class_id', $student->school_class_id)
-                ->whereHas('fee', fn($q) => $q->where('name', 'Admission'))
+                ->where('fee_id', $examFeeId)
                 ->first();
 
             if ($classFee) {
                 $studentFee = StudentFee::firstOrCreate(
-                    [
-                        'student_id'   => $student->id,
-                        'class_fee_id' => $classFee->id,
-                    ],
-                    [
-                        'total_paid'        => 0,
-                        'months'            => [],
-                        'payment_method'    => $paymentMethod,
-                        'last_payment_date' => now(),
-                    ]
+                    ['student_id' => $student->id, 'class_fee_id' => $classFee->id],
+                    ['total_paid' => 0, 'months' => [], 'payment_method' => $paymentMethod, 'last_payment_date' => now()]
                 );
 
                 if (!StudentFeePayment::where('student_fee_id', $studentFee->id)->exists()) {
                     StudentFeePayment::create([
                         'student_fee_id' => $studentFee->id,
-                        'paid_amount'    => $classFee->amount,
+                        'paid_amount' => $classFee->amount,
                         'payment_method' => $paymentMethod,
-                        'month'          => null,
-                        'payment_date'   => now(),
+                        'month' => null,
+                        'payment_date' => now(),
                     ]);
                 }
 
                 $studentFee->update([
-                    'total_paid'        => StudentFeePayment::where('student_fee_id', $studentFee->id)->sum('paid_amount'),
-                    'payment_method'    => $paymentMethod,
+                    'total_paid' => StudentFeePayment::where('student_fee_id', $studentFee->id)->sum('paid_amount'),
+                    'payment_method' => $paymentMethod,
                     'last_payment_date' => now(),
                 ]);
             }
         }
-
-        return back()->with('success', 'Fees recorded successfully!');
     }
+
+    // -------------------------------
+    // 3️⃣ Admission Fee (One-time)
+    // -------------------------------
+    if (!empty($request->admission)) {
+        $classFee = ClassFee::with('fee')
+            ->where('class_id', $student->school_class_id)
+            ->whereHas('fee', fn($q) => $q->where('name', 'Admission'))
+            ->first();
+
+        if ($classFee) {
+            $studentFee = StudentFee::firstOrCreate(
+                ['student_id' => $student->id, 'class_fee_id' => $classFee->id],
+                ['total_paid' => 0, 'months' => [], 'payment_method' => $paymentMethod, 'last_payment_date' => now()]
+            );
+
+            if (!StudentFeePayment::where('student_fee_id', $studentFee->id)->exists()) {
+                StudentFeePayment::create([
+                    'student_fee_id' => $studentFee->id,
+                    'paid_amount' => $classFee->amount,
+                    'payment_method' => $paymentMethod,
+                    'month' => null,
+                    'payment_date' => now(),
+                ]);
+            }
+
+            $studentFee->update([
+                'total_paid' => StudentFeePayment::where('student_fee_id', $studentFee->id)->sum('paid_amount'),
+                'payment_method' => $paymentMethod,
+                'last_payment_date' => now(),
+            ]);
+        }
+    }
+
+    return response()->json(['success' => true, 'message' => 'Fees recorded successfully!']);
+}
 
 
 
@@ -338,4 +459,54 @@ class StudentFeeController extends Controller
     {
         //
     }
+
+
+    public function createEmpty()
+    {
+        return Inertia::render('Institute-Managements/StudentFee/CreateStudentFee', [
+            'student' => null,
+            'fees' => [],
+            'studentFees' => [],
+        ]);
+    }
+
+    public function fetch($studentId)
+    {
+        $student = Student::with('schoolClass')->findOrFail($studentId);
+
+        $fees = ClassFee::with('fee')
+            ->where('class_id', $student->school_class_id)
+            ->get();
+
+        $studentFees = StudentFee::with('classFee.fee', 'payments')
+            ->where('student_id', $student->id)
+            ->get();
+
+        return response()->json([
+            'student' => $student,
+            'fees' => $fees,
+            'studentFees' => $studentFees,
+        ]);
+    }
+
+
+
+    // public function fetch($student_id)
+    // {
+    //     $student = Student::with('schoolClass')->findOrFail($student_id);
+
+    //     $fees = ClassFee::with('fee')
+    //         ->where('class_id', $student->school_class_id)
+    //         ->get();
+
+    //     $studentFees = StudentFee::with('classFee.fee', 'payments')
+    //         ->where('student_id', $student_id)
+    //         ->get();
+
+    //     return response()->json([
+    //         'student' => $student,
+    //         'fees' => $fees,
+    //         'studentFees' => $studentFees,
+    //     ]);
+    // }
 }

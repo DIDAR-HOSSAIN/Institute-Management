@@ -68,9 +68,6 @@ Route::resource('sections', SectionController::class);
 Route::resource('class-schedule', ClassScheduleController::class);
 Route::resource('holidays', HolidayController::class);
 Route::resource('leaves', LeaveController::class);
-// Student-wise edit all fees
-Route::get('student-fees/create/{studentId}', [StudentFeeController::class, 'create'])
-->name('student-fees.create.for-student');
 
 // Student Fee Create Form
 Route::get('/student-fees/{student}/create', [StudentFeeController::class, 'create'])
@@ -80,8 +77,20 @@ Route::get('/student-fees/{student}/create', [StudentFeeController::class, 'crea
 Route::post('/student-fees/store', [StudentFeeController::class, 'store'])
     ->name('student-fees.store');
 
+// student search route
+Route::get('/student-fees/fetch/{student_id}', [StudentFeeController::class, 'fetch'])->name('student-fees.fetch');
 
-// Route::resource('student-fees', StudentFeeController::class);
+// খালি ফর্ম
+Route::get('/student-fees/create', [StudentFeeController::class, 'createEmpty'])
+    ->name('student-fees.create.empty');
+
+// Search দিয়ে student fetch
+Route::get('/student-fees/fetch/{studentId}', [StudentFeeController::class, 'fetch'])
+    ->name('student-fees.fetch');
+
+
+
+Route::resource('student-fees', StudentFeeController::class);
 
 // Show the page
 Route::get('/attendance/sync/create', [StudentAttendanceController::class, 'syncCreate']);
