@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import EditStudentFee from './EditStudentFee';
+import React from 'react';
+import { Inertia } from '@inertiajs/inertia';
+import { Link } from '@inertiajs/react';
 
 const ViewStudentFee = ({ studentFees, fees }) => {
-    const [editingStudent, setEditingStudent] = useState(null);
-
+    console.log('view', studentFees);
     return (
         <div className="p-4">
             <h1 className="text-2xl font-bold mb-4">Student Fees</h1>
@@ -27,38 +27,25 @@ const ViewStudentFee = ({ studentFees, fees }) => {
                             <td className="border px-2 py-1">{sf.class_fee?.fee?.name || '-'}</td>
                             <td className="border px-2 py-1">{sf.total_paid}</td>
                             <td className="border px-2 py-1">{(sf.months || []).join(', ') || '-'}</td>
-                            <td className="border px-2 py-1">
-                                <button
-                                    className="bg-green-500 text-white px-2 py-1 rounded mr-2"
-                                    onClick={() => setEditingStudent(sf)}
+                            <td className="border px-2 py-1 space-x-1">
+                                <Link
+                                    href={`/student-fees/${sf.student_id}/edit-all`}
+                                    className="bg-green-500 text-white px-2 py-1 rounded"
                                 >
                                     Edit
-                                </button>
-                                {/* Delete or Show button examples */}
-                                <button className="bg-red-500 text-white px-2 py-1 rounded mr-2">Delete</button>
-                                <button className="bg-blue-500 text-white px-2 py-1 rounded">Show</button>
+                                </Link>
+                                <button className="bg-red-500 text-white px-2 py-1 rounded">Delete</button>
+                                <Link
+                                    href={route('student-fees.show', sf.id)} // corrected here
+                                    className="bg-blue-500 text-white px-2 py-1 rounded"
+                                >
+                                    Show
+                                </Link>
                             </td>
                         </tr>
                     ))}
                 </tbody>
             </table>
-
-            {/* EditStudentFee Modal/Inline */}
-            {editingStudent && (
-                <div className="mt-4 border p-4 rounded shadow bg-gray-50">
-                    <button
-                        className="float-right bg-gray-400 text-white px-2 py-1 rounded mb-2"
-                        onClick={() => setEditingStudent(null)}
-                    >
-                        Close
-                    </button>
-                    <EditStudentFee
-                        student={editingStudent.student}
-                        fees={fees}
-                        studentFees={[editingStudent]}
-                    />
-                </div>
-            )}
         </div>
     );
 };

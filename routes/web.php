@@ -69,28 +69,30 @@ Route::resource('class-schedule', ClassScheduleController::class);
 Route::resource('holidays', HolidayController::class);
 Route::resource('leaves', LeaveController::class);
 
-// Student Fee Create Form
-Route::get('/student-fees/{student}/create', [StudentFeeController::class, 'create'])
-    ->name('student-fees.create');
+// সব ফি লিস্ট
+Route::get('/student-fees', [StudentFeeController::class, 'index'])
+    ->name('student-fees.index');
 
-// Store Student Fee
-Route::post('/student-fees/store', [StudentFeeController::class, 'store'])
-    ->name('student-fees.store');
-
-// student search route
-Route::get('/student-fees/fetch/{student_id}', [StudentFeeController::class, 'fetch'])->name('student-fees.fetch');
 
 // খালি ফর্ম
-Route::get('/student-fees/create', [StudentFeeController::class, 'createEmpty'])
-    ->name('student-fees.create.empty');
+Route::get('/student-fees/create', [StudentFeeController::class, 'create'])
+    ->name('student-fees.create');
 
-// Search দিয়ে student fetch
+// Student সার্চ দিয়ে ডাটা ফেচ
 Route::get('/student-fees/fetch/{studentId}', [StudentFeeController::class, 'fetch'])
     ->name('student-fees.fetch');
 
+// ফি স্টোর
+Route::post('/student-fees/store', [StudentFeeController::class, 'store'])
+    ->name('student-fees.store');
 
+// সব ফি এডিট
+Route::get('/student-fees/{student}/edit-all', [StudentFeeController::class, 'editAll'])
+    ->name('student-fees.edit-all');
 
-Route::resource('student-fees', StudentFeeController::class);
+// সব ফি আপডেট
+Route::put('/student-fees/{student}/update-all', [StudentFeeController::class, 'updateAll'])
+    ->name('student-fees.update-all');
 
 // Show the page
 Route::get('/attendance/sync/create', [StudentAttendanceController::class, 'syncCreate']);
@@ -99,6 +101,12 @@ Route::get('/attendance/sync/create', [StudentAttendanceController::class, 'sync
 Route::get('/attendance/sync', [StudentAttendanceController::class, 'sync'])->name('attendance.sync');
 Route::resource('/attendance', StudentAttendanceController::class);
 
+// Student Fee show route
+Route::get('/student-fees/{student_fee}', [StudentFeeController::class, 'show'])
+    ->name('student-fees.show');
+
+
+// Route::resource('student-fees', StudentAttendanceController::class);
 
 // Route::get('/zk-test', function () {
 //     $zk = new \MehediJaman\LaravelZkteco\LaravelZkteco('192.168.1.40');
