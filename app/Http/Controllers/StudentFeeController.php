@@ -192,15 +192,18 @@ class StudentFeeController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(StudentFee $studentFee)
+    public function show($student_id)
     {
-        $studentFee->load(['student.schoolClass', 'classFee.fee', 'payments']);
+        $studentFees = StudentFee::with(['student.schoolClass', 'classFee.fee', 'payments'])
+            ->where('student_id', $student_id)
+            ->get();
 
         return Inertia::render('Institute-Managements/StudentFee/ShowStudentFee', [
-            'studentFees' => [$studentFee],
+            'studentFees' => $studentFees,
         ]);
     }
-    
+
+
 
 
     /**

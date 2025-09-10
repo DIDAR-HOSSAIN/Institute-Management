@@ -21,9 +21,10 @@ const ViewStudentFee = ({ studentFees, fees }) => {
                 </thead>
                 <tbody>
                     {studentFees.map((sf) => (
+                        
                         <tr key={sf.id} className="hover:bg-gray-50">
                             <td className="border px-2 py-1">{sf.student?.student_name || '-'}</td>
-                            <td className="border px-2 py-1">{sf.student?.school_class?.class_name || '-'}</td>
+                            <td className="border px-2 py-1">{sf.student?.school_class?.class_name || '-'}-{sf.student_id}</td>
                             <td className="border px-2 py-1">{sf.class_fee?.fee?.name || '-'}</td>
                             <td className="border px-2 py-1">{sf.total_paid}</td>
                             <td className="border px-2 py-1">{(sf.months || []).join(', ') || '-'}</td>
@@ -36,7 +37,7 @@ const ViewStudentFee = ({ studentFees, fees }) => {
                                 </Link>
                                 <button className="bg-red-500 text-white px-2 py-1 rounded">Delete</button>
                                 <Link
-                                    href={route('student-fees.show', sf.id)} // corrected here
+                                    href={route('student-fees.show', sf.student_id)} 
                                     className="bg-blue-500 text-white px-2 py-1 rounded"
                                 >
                                     Show

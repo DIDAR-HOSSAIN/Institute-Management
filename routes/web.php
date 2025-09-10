@@ -86,6 +86,10 @@ Route::get('/student-fees/fetch/{studentId}', [StudentFeeController::class, 'fet
 Route::post('/student-fees/store', [StudentFeeController::class, 'store'])
     ->name('student-fees.store');
 
+// Student Fee show route
+Route::get('/student-fees/{student_id}', [StudentFeeController::class, 'show'])
+    ->name('student-fees.show');
+
 // সব ফি এডিট
 Route::get('/student-fees/{student}/edit-all', [StudentFeeController::class, 'editAll'])
     ->name('student-fees.edit-all');
@@ -94,30 +98,14 @@ Route::get('/student-fees/{student}/edit-all', [StudentFeeController::class, 'ed
 Route::put('/student-fees/{student}/update-all', [StudentFeeController::class, 'updateAll'])
     ->name('student-fees.update-all');
 
+// Route::resource('student-fees', StudentAttendanceController::class);
+
 // Show the page
 Route::get('/attendance/sync/create', [StudentAttendanceController::class, 'syncCreate']);
 
 // Sync device and save to student_attendances table
 Route::get('/attendance/sync', [StudentAttendanceController::class, 'sync'])->name('attendance.sync');
 Route::resource('/attendance', StudentAttendanceController::class);
-
-// Student Fee show route
-Route::get('/student-fees/{student_fee}', [StudentFeeController::class, 'show'])
-    ->name('student-fees.show');
-
-
-// Route::resource('student-fees', StudentAttendanceController::class);
-
-// Route::get('/zk-test', function () {
-//     $zk = new \MehediJaman\LaravelZkteco\LaravelZkteco('192.168.1.40');
-//     if ($zk->connect()) {
-//         return "Connected to device!";
-//     }
-//     return "Failed to connect.";
-// });
-
-
-
 
 Route::resource('general/members', GeneralMemberController::class);
 
