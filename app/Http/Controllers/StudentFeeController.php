@@ -9,6 +9,8 @@ use App\Models\Fee;
 use App\Models\Student;
 use App\Models\StudentFeePayment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class StudentFeeController extends Controller
@@ -242,66 +244,74 @@ class StudentFeeController extends Controller
 
     public function updateAll(Request $request, $student_id)
     {
-        $request->validate([
-            'fees' => 'required|array',
-            'fees.*.fee_id' => 'required|exists:fees,id',
-            'fees.*.paid_amount' => 'required|numeric|min:0',
-            'fees.*.payment_method' => 'required|string|in:Cash,Bkash,Bank',
-            'fees.*.months' => 'nullable|array',
-        ]);
+        DB::beginTransaction();
 
-        foreach ($request->fees as $feeData) {
-            $classFee = ClassFee::where('class_id', $request->class_id ?? 0)
-                ->where('fee_id', $feeData['fee_id'])
-                ->first();
-
-            if (!$classFee) continue;
-
-            $studentFee = StudentFee::firstOrCreate([
-                'student_id' => $student_id,
-                'class_fee_id' => $classFee->id,
+        try {
+            $request->validate([
+                'fees' => 'required|array',
+                'fees.*.fee_id' => 'required|exists:fees,id',
+                'fees.*.paid_amount' => 'required|numeric|min:0',
+                'fees.*.payment_method' => 'required|string|in:Cash,Bkash,Bank',
+                'fees.*.months' => 'nullable|array',
             ]);
 
-            $months = $studentFee->months ?? [];
-            if (!empty($feeData['months'])) {
-                foreach ($feeData['months'] as $month) {
-                    if (!in_array($month, $months)) {
-                        $months[] = $month;
-                        StudentFeePayment::firstOrCreate([
-                            'student_fee_id' => $studentFee->id,
-                            'month' => $month,
-                        ], [
+            foreach ($request->fees as $feeData) {
+                $classFee = ClassFee::where('class_id', $request->class_id ?? 0)
+                    ->where('fee_id', $feeData['fee_id'])
+                    ->first();
+
+                if (!$classFee) continue;
+
+                $studentFee = StudentFee::firstOrCreate([
+                    'student_id' => $student_id,
+                    'class_fee_id' => $classFee->id,
+                ]);
+
+                // Delete old payments
+                $studentFee->payments()->delete();
+
+                $months = $feeData['months'] ?? [];
+
+                if (!empty($months)) {
+                    foreach ($months as $month) {
+                        $studentFee->payments()->create([
                             'paid_amount' => $feeData['paid_amount'],
                             'payment_method' => $feeData['payment_method'],
                             'payment_date' => now(),
+                            'month' => $month,
                         ]);
                     }
-                }
-            } else {
-                // One-time fee
-                if (!StudentFeePayment::where('student_fee_id', $studentFee->id)
-                    ->whereNull('month')->exists()) {
-                    StudentFeePayment::create([
-                        'student_fee_id' => $studentFee->id,
+                } else {
+                    $studentFee->payments()->create([
                         'paid_amount' => $feeData['paid_amount'],
                         'payment_method' => $feeData['payment_method'],
-                        'month' => null,
                         'payment_date' => now(),
+                        'month' => null,
                     ]);
                 }
+
+                $studentFee->update([
+                    'total_paid' => $studentFee->payments()->sum('paid_amount'),
+                    'months' => $months,
+                    'payment_method' => $feeData['payment_method'],
+                    'last_payment_date' => now(),
+                ]);
             }
 
-            $studentFee->update([
-                'total_paid' => StudentFeePayment::where('student_fee_id', $studentFee->id)->sum('paid_amount'),
-                'months' => $months,
-                'payment_method' => $feeData['payment_method'],
-                'last_payment_date' => now(),
-            ]);
-        }
+            DB::commit();
 
-        return redirect()->route('student-fees.index')
-            ->with('success', 'All fees updated successfully!');
+            return redirect()->route('student-fees.index')
+                ->with('success', 'All fees updated successfully!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('UpdateAll Student Fees failed', ['error' => $e->getMessage()]);
+
+            return back()->withErrors([
+                'error' => 'Update failed: ' . $e->getMessage()
+            ])->withInput();
+        }
     }
+
 
 
     /**
