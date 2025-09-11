@@ -120,25 +120,25 @@ export default function EditStudentFee({ student, fees = [], studentFees = [] })
         }
 
         // ✅ Correct put
+        // ✅ Correct put
         put(
             route("student-fees.update-all", loadedStudent?.id),
-            { fees: feesToSend },
+            {
+                fees: feesToSend,
+                class_id: loadedStudent?.school_class?.id || loadedStudent?.class_id, // 🔥 Add this
+            },
             {
                 preserveScroll: true,
                 onSuccess: () => Swal.fire("✅ Success", "Fees updated successfully!", "success"),
                 onError: (errors) => Swal.fire("❌ Error", Object.values(errors).flat().join("\n"), "error"),
             }
         );
+
     };
 
     // Totals
     const totalTuition = tuitionFee * data.tuition_months.length;
-    const totalExam = data.exams.reduce((sum, examId) => {
-        const examFee = loadedFees.find(f => f.fee?.id === examId || f.id === examId);
-        return sum + (examFee?.amount || 0);
-    }, 0);
-    const totalAdmission = data.admission ? admissionFee : 0;
-    const grandTotal = totalTuition + totalExam + totalAdmission;
+
 
     return (
         <div className="max-w-4xl mx-auto p-6 bg-white rounded-xl shadow-md">
@@ -201,7 +201,6 @@ export default function EditStudentFee({ student, fees = [], studentFees = [] })
                                 </label>
                             ))}
                         </div>
-                        <p>Total Exam: {totalExam}৳</p>
                     </div>
 
                     {/* Admission */}
@@ -210,10 +209,7 @@ export default function EditStudentFee({ student, fees = [], studentFees = [] })
                             <input type="checkbox" checked={data.admission} onChange={e => setData("admission", e.target.checked)} />
                             <span>Admission Fee - {admissionFee}৳</span>
                         </label>
-                        <p>Total Admission: {totalAdmission}৳</p>
                     </div>
-
-                    <p className="text-lg font-bold">Grand Total: {grandTotal}৳</p>
 
                     {/* Payment Method */}
                     <div>

@@ -87,9 +87,9 @@ export default function CreateStudentFee({ student, fees = [], studentFees = [] 
     // Submit
     const submit = (e) => {
         e.preventDefault();
+        console.log("Submitting Data:", data);
 
         post(route("student-fees.store"), {
-            data,
             onSuccess: () => {
                 Swal.fire({
                     title: "✅ Success!",
@@ -98,7 +98,6 @@ export default function CreateStudentFee({ student, fees = [], studentFees = [] 
                     confirmButtonText: "OK",
                 });
 
-                // চাইলে reset করতে পারেন
                 setData("tuition_months", []);
                 setData("exams", []);
                 setData("admission", false);

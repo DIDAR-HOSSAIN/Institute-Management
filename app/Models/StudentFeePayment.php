@@ -11,16 +11,15 @@ class StudentFeePayment extends Model
 
     protected $fillable = [
         'student_fee_id',
-        'student_id',
-        'fee_id',
+        'paid_amount',
         'payment_method',
         'month',
         'payment_date',
-        'paid_amount',
     ];
 
     public function studentFee()
     {
         return $this->belongsTo(StudentFee::class);
     }
+
 }
