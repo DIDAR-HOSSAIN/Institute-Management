@@ -11,10 +11,11 @@ class StudentFeePayment extends Model
 
     protected $fillable = [
         'student_fee_id',
-        'paid_amount',
-        'payment_method',
+        'type',
         'month',
+        'paid_amount',
         'payment_date',
+        'payment_method',
     ];
 
     public function studentFee()

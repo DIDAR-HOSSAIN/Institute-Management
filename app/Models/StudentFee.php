@@ -9,7 +9,7 @@ class StudentFee extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['student_id', 'class_fee_id', 'total_paid',  'payment_method', 'months', 'last_payment_date'];
+    protected $fillable = ['student_id', 'total_paid', 'last_payment_date'];
 
     protected $casts = [
         'months' => 'array',

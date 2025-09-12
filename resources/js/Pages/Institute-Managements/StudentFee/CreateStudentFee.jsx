@@ -1,11 +1,9 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useForm, usePage } from "@inertiajs/react";
 import axios from "axios";
-import Swal from "sweetalert2";
 
 export default function CreateStudentFee({ student, fees = [], studentFees = [] }) {
-    const { flash } = usePage().props;
-    const { data, setData, post, processing } = useForm({
+    const { data, setData, post } = useForm({
         student_id: student?.id || "",
         tuition_months: [],
         exams: [],
@@ -47,19 +45,24 @@ export default function CreateStudentFee({ student, fees = [], studentFees = [] 
     useEffect(() => {
         if (!loadedStudentFees.length) return;
 
+        // Tuition Paid months
         const tuitionPaidMonths = loadedStudentFees
-            .filter(sf => sf.class_fee?.fee?.name === "Tuition")
-            .flatMap(sf => sf.months || []);
+            .filter(sf => sf.month) // month!=null
+            .map(sf => sf.month);
         setPaidMonths(tuitionPaidMonths);
 
+        // Exam Paid
         const examPaid = loadedStudentFees
-            .filter(sf => sf.class_fee?.fee?.type === "exam")
-            .map(sf => sf.class_fee?.fee_id);
+            .filter(sf => sf.type === "exam")
+            .map(sf => "exam"); // exam_id বাদ, শুধু "exam" রাখব
         setPaidExams(examPaid);
 
-        const admissionPaid = loadedStudentFees.some(sf => sf.class_fee?.fee?.name === "Admission");
+
+        // Admission Paid
+        const admissionPaid = loadedStudentFees.some(sf => sf.type === "admission");
         setAdmissionAlreadyPaid(admissionPaid);
 
+        // ফর্মে student_id সেট করুন
         setData("student_id", loadedStudent?.id || "");
         setData("tuition_months", tuitionPaidMonths);
         setData("exams", examPaid);
@@ -77,6 +80,9 @@ export default function CreateStudentFee({ student, fees = [], studentFees = [] 
             setLoadedStudent(res.data.student);
             setLoadedFees(res.data.fees);
             setLoadedStudentFees(res.data.studentFees);
+
+            // 🟢 student_id ফর্মে সেট করুন
+            setData("student_id", res.data.student.id);
         } catch (err) {
             alert("Student not found!");
         } finally {
@@ -87,36 +93,11 @@ export default function CreateStudentFee({ student, fees = [], studentFees = [] 
     // Submit
     const submit = (e) => {
         e.preventDefault();
-        console.log("Submitting Data:", data);
-
-        post(route("student-fees.store"), {
-            onSuccess: () => {
-                Swal.fire({
-                    title: "✅ Success!",
-                    text: "Fees recorded successfully!",
-                    icon: "success",
-                    confirmButtonText: "OK",
-                });
-
-                setData("tuition_months", []);
-                setData("exams", []);
-                setData("admission", false);
-            },
-            onError: (errors) => {
-                Swal.fire({
-                    title: "❌ Error!",
-                    text: "Something went wrong while saving fees.",
-                    icon: "error",
-                    confirmButtonText: "OK",
-                });
-            },
-        });
+        post(route("student-fees.store"));
     };
-
 
     // Tuition হিসাব
     const totalTuition = tuitionFee * (data.tuition_months?.length || 0);
-
 
     return (
         <div className="max-w-4xl mx-auto p-6 bg-white rounded-xl shadow-md">
@@ -176,28 +157,31 @@ export default function CreateStudentFee({ student, fees = [], studentFees = [] 
                     <div>
                         <h3 className="font-semibold mb-2">Exam Fees</h3>
                         <div className="grid grid-cols-2 gap-2">
-                            {loadedFees.filter(f => f.fee.type === "exam").map(cf => (
-                                <label key={cf.fee.id} className="flex items-center space-x-2">
-                                    <input
-                                        type="checkbox"
-                                        checked={data.exams.includes(cf.fee.id)}
-                                        disabled={paidExams.includes(cf.fee.id)}
-                                        onChange={() => {
-                                            if (paidExams.includes(cf.fee.id)) return;
-                                            const updated = data.exams.includes(cf.fee.id)
-                                                ? data.exams.filter(x => x !== cf.fee.id)
-                                                : [...data.exams, cf.fee.id];
-                                            setData("exams", updated);
-                                        }}
-                                    />
-                                    <span>
-                                        {cf.fee.name} - {cf.amount}৳{" "}
-                                        {paidExams.includes(cf.fee.id) && "(Paid)"}
-                                    </span>
-                                </label>
-                            ))}
+                            {loadedFees
+                                .filter(f => f.fee?.type === "exam") // ফিল্টার ঠিক আছে
+                                .map(cf => (
+                                    <label key={cf.id} className="flex items-center space-x-2">
+                                        <input
+                                            type="checkbox"
+                                            checked={data.exams.includes(cf.id)}
+                                            disabled={paidExams.includes(cf.id)}
+                                            onChange={() => {
+                                                if (paidExams.includes(cf.id)) return;
+                                                const updated = data.exams.includes(cf.id)
+                                                    ? data.exams.filter(x => x !== cf.id)
+                                                    : [...data.exams, cf.id];
+                                                setData("exams", updated);
+                                            }}
+                                        />
+                                        <span>
+                                            {cf.fee.name} - {cf.amount}৳{" "}
+                                            {paidExams.includes(cf.id) && "(Paid)"}
+                                        </span>
+                                    </label>
+                                ))}
                         </div>
                     </div>
+
 
                     {/* Admission */}
                     <div>
@@ -218,7 +202,6 @@ export default function CreateStudentFee({ student, fees = [], studentFees = [] 
 
                     <button
                         type="submit"
-                        disabled={processing}
                         className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
                     >
                         Save Payments
