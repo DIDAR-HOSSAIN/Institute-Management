@@ -1,77 +1,90 @@
 import React from "react";
+import { Link } from "@inertiajs/react";
 
-export default function ShowStudentFee({ studentFees }) {
-    if (!studentFees || studentFees.length === 0) {
+const ShowStudentFee = ({ studentFee }) => {
+    if (!studentFee) {
         return (
-            <div className="p-4">
-                <h2 className="text-2xl font-bold mb-4">Student Fees</h2>
-                <p className="text-gray-600">No student fees available.</p>
+            <div className="p-6 text-center text-gray-500">
+                No data found for this student.
             </div>
         );
     }
 
-    // Take first record for student/class info
-    const studentInfo = studentFees[0];
-    console.log('show studentInfo', studentInfo);
-
-    // Merge all payments from all studentFees
-    const allPayments = studentFees.flatMap((sf) => sf.payments || []);
-    
-
-    console.log('show allPayments', allPayments);
+    const groupedPayments = {};
+    (studentFee.payments || []).forEach((p) => {
+        if (!groupedPayments[p.type]) groupedPayments[p.type] = [];
+        groupedPayments[p.type].push(p);
+    });
 
     return (
-        <div className="p-4 max-w-7xl mx-auto space-y-6">
-            <h2 className="text-2xl font-bold mb-6">Student Fees Details</h2>
+        <div className="p-6 max-w-4xl mx-auto">
+            <h1 className="text-3xl font-bold mb-6 text-gray-800">
+                💰 Student Fee Details
+            </h1>
 
-            {/* Student & Fee Info */}
-            <div className="p-4 border rounded-lg shadow-sm bg-white">
-                <div className="mb-4 grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
-                    <p><strong>Student:</strong> {studentInfo.student?.student_name || "-"}</p>
-                    <p><strong>Class:</strong> {studentInfo.student?.school_class?.class_name || "-"}</p>
-                    <p><strong>Academic Year:</strong> {studentInfo.student?.academic_year || "-"}</p>
-                    <p><strong>Class Fee Amount:</strong> {studentInfo.class_fee?.amount || "-"}৳</p>
-                    <p><strong>Payment Method:</strong> {studentInfo.payment_method || "-"}</p>
-                    <p><strong>Total Paid:</strong> {
-                        studentFees.reduce((sum, sf) => sum + Number(sf.total_paid || 0), 0)
-                    }৳</p>
-                    <p><strong>Last Payment Date:</strong> {studentInfo.last_payment_date || "-"}</p>
-                    <p><strong>Months:</strong> {(studentInfo.months || []).join(", ") || "-"}</p>
-                </div>
+            {/* Student Info */}
+            <div className="mb-6 bg-white shadow rounded-lg p-4">
+                <h2 className="text-xl font-semibold mb-2">
+                    {studentFee.student?.student_name || "-"}
+                </h2>
+                <p className="text-gray-600">
+                    <strong>Class:</strong>{" "}
+                    {studentFee.student?.school_class?.class_name || "-"}
+                </p>
+                <p className="text-gray-600">
+                    <strong>Total Paid:</strong>{" "}
+                    {Number(studentFee.total_paid).toFixed(2)}৳
+                </p>
             </div>
 
-            {/* Payments Table */}
-            {allPayments.length > 0 && (
-                <div className="overflow-x-auto mt-4">
-                    <h3 className="font-semibold mb-2">Payment History</h3>
-                    <table className="table-auto border-collapse border border-gray-300 w-full text-sm">
-                        <thead>
-                            <tr className="bg-gray-200">
-                                <th className="border px-2 py-1">ID</th>
-                                <th className="border px-2 py-1">Paid Amount</th>
-                                <th className="border px-2 py-1">Payment Method</th>
-                                <th className="border px-2 py-1">Month</th>
-                                <th className="border px-2 py-1">Fee Name</th>
-                                <th className="border px-2 py-1">Payment Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {allPayments.map((p) => (
-                                <tr key={p.id} className="hover:bg-gray-50">
-                                    <td className="border px-2 py-1">{p.id}</td>
-                                    <td className="border px-2 py-1">{p.paid_amount}৳</td>
-                                    <td className="border px-2 py-1">{p.payment_method}</td>
-                                    <td className="border px-2 py-1">{p.month || "-"}</td>
-                                    <td className="border px-2 py-1">{p.student_fee_id}</td>
-                                    <td className="border px-2 py-1">
-                                        {p.payment_date ? new Date(p.payment_date).toLocaleDateString() : "-"}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            )}
+            {/* Payment Details */}
+            <div className="bg-white shadow rounded-lg p-4">
+                <h3 className="text-xl font-semibold mb-4">Payments</h3>
+
+                {Object.keys(groupedPayments).length === 0 ? (
+                    <p className="text-gray-400">No payments found.</p>
+                ) : (
+                    Object.entries(groupedPayments).map(([type, payments]) => (
+                        <div key={type} className="mb-4">
+                            <h4 className="text-lg font-semibold capitalize text-gray-700 mb-2">
+                                {type === "tuition"
+                                    ? "Tuition"
+                                    : type === "exam"
+                                        ? "Exam"
+                                        : "Admission"}
+                            </h4>
+                            <ul className="list-disc list-inside text-gray-600">
+                                {payments.map((p, idx) => (
+                                    <li key={idx} className="mb-1">
+                                        {p.month ? `${p.month} - ` : ""}
+                                        {p.paid_amount}৳ ({p.payment_method})
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    ))
+                )}
+            </div>
+
+            {/* Tuition Months */}
+            <div className="bg-white shadow rounded-lg p-4 mt-4">
+                <h3 className="text-xl font-semibold mb-2">Tuition Months</h3>
+                <p className="text-gray-700">
+                    {(groupedPayments.tuition || []).map((p) => p.month).join(", ") || "-"}
+                </p>
+            </div>
+
+            {/* Back Button */}
+            <div className="mt-6">
+                <Link
+                    href="/student-fees"
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                >
+                    ← Back to Student Fees
+                </Link>
+            </div>
         </div>
     );
-}
+};
+
+export default ShowStudentFee;

@@ -87,8 +87,7 @@ Route::post('/student-fees/store', [StudentFeeController::class, 'store'])
     ->name('student-fees.store');
 
 // Student Fee show route
-Route::get('/student-fees/{student_id}', [StudentFeeController::class, 'show'])
-    ->name('student-fees.show');
+Route::get('/student-fees/{studentId}', [StudentFeeController::class, 'show'])->name('student-fees.show');
 
 // সব ফি এডিট
 Route::get('/student-fees/{student}/edit-all', [StudentFeeController::class, 'editAll'])
