@@ -9,7 +9,12 @@ class Subject extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['subject_name'];
+    protected $fillable = ['school_class_id', 'subject_name', 'subject_code', 'full_mark', 'pass_mark'];
+
+    public function schoolClass()
+    {
+        return $this->belongsTo(SchoolClass::class);
+    }
 
     public function results()
     {

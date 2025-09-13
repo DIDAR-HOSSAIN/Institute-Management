@@ -13,7 +13,11 @@ return new class extends Migration
     {
         Schema::create('subjects', function (Blueprint $table) {
             $table->id();
+            $table->integer('school_class_id');
             $table->string('subject_name');
+            $table->string('subject_code');
+            $table->integer('full_mark');
+            $table->integer('pass_mark');
             $table->timestamps();
         });
     }

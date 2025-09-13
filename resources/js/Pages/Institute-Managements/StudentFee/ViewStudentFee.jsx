@@ -89,7 +89,7 @@ const ViewStudentFee = ({ studentFees }) => {
                                         {/* Actions */}
                                         <td className="px-4 py-3 space-x-2">
                                             <Link
-                                                href={`/student-fees/${sf.student_id}/edit-all`}
+                                                href={route('student-fees.create-edit')}
                                                 className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm"
                                             >
                                                 Edit

@@ -13,7 +13,12 @@ return new class extends Migration
     {
         Schema::create('exams', function (Blueprint $table) {
             $table->id();
-            $table->string('exam_name'); // Mid-Term, Final, etc.
+            $table->string('exam_name');
+            $table->integer('school_class_id');
+            $table->integer('exam_year');
+            $table->string('exam_term');
+            $table->date('start_date');
+            $table->date('end_date');
             $table->timestamps();
         });
     }

@@ -17,6 +17,9 @@ return new class extends Migration
             $table->string('exam_id');
             $table->string('subject_id');
             $table->integer('marks_obtained');
+            $table->string('grade');
+            $table->string('remarks');
+            $table->boolean('is_pass');
             $table->timestamps();
         });
     }

@@ -9,7 +9,7 @@ class Result extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['student_id', 'exam_id', 'subject_id', 'marks_obtained'];
+    protected $fillable = ['student_id', 'exam_id', 'subject_id', 'marks_obtained', 'grade', 'remarks', 'is_pass'];
 
     public function student()
     {
@@ -25,4 +25,5 @@ class Result extends Model
     {
         return $this->belongsTo(Subject::class);
     }
+    
 }

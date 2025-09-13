@@ -16,6 +16,7 @@ use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ResultController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\RosterController;
 use App\Http\Controllers\SchoolClassController;
@@ -96,7 +97,7 @@ Route::get('/student-fees/create/edit', [StudentFeeController::class, 'createEdi
 // Student সার্চ দিয়ে ডাটা ফেচ
 Route::get('/student-fees/fetch-edit/{studentId}', [StudentFeeController::class, 'fetchEdit'])
     ->name('student-fees.fetch-edit');
-    
+
 // সব ফি এডিট
 Route::get('/student-fees/{student}/edit-all', [StudentFeeController::class, 'editAll'])
     ->name('student-fees.edit-all');
@@ -113,6 +114,17 @@ Route::get('/attendance/sync/create', [StudentAttendanceController::class, 'sync
 // Sync device and save to student_attendances table
 Route::get('/attendance/sync', [StudentAttendanceController::class, 'sync'])->name('attendance.sync');
 Route::resource('/attendance', StudentAttendanceController::class);
+
+//student result Route
+Route::get('/results/create/single', [ResultController::class, 'createResultSingle'])
+    ->name('student-fees.create-result');
+
+Route::get('/results/fetch-student/{id}', [ResultController::class, 'fetchStudentData'])->name('results.fetchStudent');
+
+Route::post('/results', [ResultController::class, 'storeResultSingle'])->name('result.store');
+
+Route::resource('results', ResultController::class);
+
 
 Route::resource('general/members', GeneralMemberController::class);
 

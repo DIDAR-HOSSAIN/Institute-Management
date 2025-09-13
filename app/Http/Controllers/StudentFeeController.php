@@ -241,22 +241,6 @@ class StudentFeeController extends Controller
     }
 
 
-    public function editAll($student_id)
-    {
-        $student = Student::with('schoolClass')->findOrFail($student_id);
-
-        $studentFees = StudentFee::with(['classFee.fee', 'payments'])
-            ->where('student_id', $student_id)
-            ->get();
-
-        $fees = Fee::all();
-
-        return Inertia::render('Institute-Managements/StudentFee/EditStudentFee', [
-            'student' => $student,
-            'fees' => $fees,
-            'studentFees' => $studentFees,
-        ]);
-    }
 
     public function updateAll(Request $request, $student_id)
     {
