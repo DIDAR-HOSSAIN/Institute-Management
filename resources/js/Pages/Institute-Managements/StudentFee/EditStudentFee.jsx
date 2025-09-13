@@ -1,20 +1,29 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useForm } from "@inertiajs/react";
 import axios from "axios";
-import Swal from "sweetalert2";
 
-export default function EditStudentFee({ student, fees = [], studentFees = [] }) {
-    const { data, setData, put, processing } = useForm({
+export default function EditStudentFee({
+    student,
+    fees = [],
+    studentFees = [],
+    paidTuitionMonths = [],
+    paidExams = [],
+    admissionPaid = false
+}) {
+    const { data, setData, put } = useForm({
         student_id: student?.id || "",
-        tuition_months: [],
-        exams: [],
-        admission: false,
+        tuition_months: paidTuitionMonths || [],
+        exams: paidExams || [],
+        admission: admissionPaid || false,
         payment_method: "Cash",
     });
 
     const [loadedStudent, setLoadedStudent] = useState(student);
     const [loadedFees, setLoadedFees] = useState(fees);
     const [loadedStudentFees, setLoadedStudentFees] = useState(studentFees);
+    const [paidMonths, setPaidMonths] = useState(paidTuitionMonths || []);
+    const [paidExamIds, setPaidExamIds] = useState(paidExams || []);
+    const [admissionAlreadyPaid, setAdmissionAlreadyPaid] = useState(admissionPaid || false);
     const [searchId, setSearchId] = useState("");
     const [loading, setLoading] = useState(false);
 
@@ -23,217 +32,183 @@ export default function EditStudentFee({ student, fees = [], studentFees = [] })
         "July", "August", "September", "October", "November", "December"
     ], []);
 
-    // Pre-fill existing payments
+    const tuitionFee = useMemo(
+        () => (loadedFees || []).find(f => f.fee?.name === 'Tuition')?.amount || 0,
+        [loadedFees]
+    );
+
+    const admissionClassFee = useMemo(
+        () => (loadedFees || []).find(f => f.fee?.name === 'Admission'),
+        [loadedFees]
+    );
+
+    const admissionAmount = Number(admissionClassFee?.amount ?? 0);
+
+    const flattenPayments = (studentFeesPayload) => {
+        if (!studentFeesPayload?.length) return [];
+        return studentFeesPayload.flatMap(sf => sf.payments || []);
+    };
+
     useEffect(() => {
-        if (!loadedStudentFees.length) return;
+        if (!loadedStudentFees?.length) {
+            setPaidMonths([]);
+            setPaidExamIds([]);
+            setAdmissionAlreadyPaid(false);
+            setData('tuition_months', []);
+            setData('exams', []);
+            setData('admission', false);
+            return;
+        }
 
-        const tuitionPaidMonths = [];
-        const examPaidIds = [];
-        let admissionPaid = false;
+        const payments = flattenPayments(loadedStudentFees);
 
-        loadedStudentFees.forEach(sf => {
-            sf.payments?.forEach(p => {
-                if (p.type === "tuition" && p.month) {
-                    tuitionPaidMonths.push(p.month);
-                }
-                if (p.type === "exam") {
-                    examPaidIds.push(sf.class_fee_id);
-                }
-                if (p.type === "admission") {
-                    admissionPaid = true;
-                }
-            });
-        });
+        const tuitionPaidMonths = Array.from(new Set(
+            payments.filter(p => p.type === 'tuition' && p.month).map(p => p.month)
+        ));
 
-        setData("tuition_months", tuitionPaidMonths);
-        setData("exams", examPaidIds);
-        setData("admission", !admissionPaid); // only enable checkbox if not paid
-        setData("student_id", loadedStudent?.id || "");
-    }, [loadedStudentFees, loadedStudent]);
+        const examPaidIds = Array.from(new Set(
+            payments.filter(p => p.type === 'exam').map(p => p.class_fee_id).filter(Boolean)
+        ));
 
-    // Search student by ID
+        const admissionPaidFlag = payments.some(p => p.type === 'admission');
+
+        setPaidMonths(tuitionPaidMonths);
+        setPaidExamIds(examPaidIds);
+        setAdmissionAlreadyPaid(admissionPaidFlag);
+
+        setData('tuition_months', tuitionPaidMonths);
+        setData('exams', examPaidIds);
+        setData('admission', admissionPaidFlag);
+    }, [loadedStudentFees, loadedStudent, loadedFees]);
+
     const handleSearch = async (e) => {
         e.preventDefault();
         if (!searchId) return;
-
         setLoading(true);
         try {
             const res = await axios.get(`/student-fees/fetch/${searchId}`);
-            setLoadedStudent(res.data.student);
-            setLoadedFees(res.data.fees);
-            setLoadedStudentFees(res.data.studentFees);
-            setData("student_id", res.data.student?.id || "");
-        } catch {
-            Swal.fire("❌ Error", "Student not found!", "error");
+            const s = res.data.student;
+            const f = res.data.fees;
+            const sf = res.data.studentFees;
+            const tuitionMonths = res.data.paidTuitionMonths || [];
+            const examIds = res.data.paidExams || [];
+            const admissionFlag = res.data.admissionPaid || false;
+
+            setLoadedStudent(s);
+            setLoadedFees(f);
+            setLoadedStudentFees(sf);
+
+            setPaidMonths(tuitionMonths);
+            setPaidExamIds(examIds);
+            setAdmissionAlreadyPaid(admissionFlag);
+
+            setData("student_id", s.id);
+            setData("tuition_months", tuitionMonths);
+            setData("exams", examIds);
+            setData("admission", admissionFlag);
         } finally {
             setLoading(false);
         }
     };
 
-    // Submit updated fees
     const submit = (e) => {
         e.preventDefault();
-
-        const feesToSend = [];
-
-        // Tuition
-        const tuitionFeeObj = loadedFees.find(f => f.fee?.name === "Tuition");
-        data.tuition_months.forEach(month => {
-            if (tuitionFeeObj) {
-                feesToSend.push({
-                    fee_id: tuitionFeeObj.fee_id,
-                    paid_amount: tuitionFeeObj.amount,
-                    payment_method: data.payment_method,
-                    months: [month],
-                });
-            }
+        put(route('student-fees.update-all', loadedStudent.id), {
+            onSuccess: () => alert("Updated successfully!"),
+            onError: (errors) => console.log(errors),
         });
-
-        // Exams
-        data.exams.forEach(examId => {
-            const examFee = loadedFees.find(f => f.id === examId || f.fee?.id === examId);
-            if (examFee) {
-                feesToSend.push({
-                    fee_id: examFee.fee_id || examId,
-                    paid_amount: examFee.amount,
-                    payment_method: data.payment_method,
-                    months: [],
-                });
-            }
-        });
-
-        // Admission
-        if (data.admission) {
-            const admissionFeeObj = loadedFees.find(f => f.fee?.name === "Admission");
-            if (admissionFeeObj) {
-                feesToSend.push({
-                    fee_id: admissionFeeObj.fee_id,
-                    paid_amount: admissionFeeObj.amount,
-                    payment_method: data.payment_method,
-                    months: [],
-                });
-            }
-        }
-
-        if (!feesToSend.length) {
-            Swal.fire("❌ Error", "Please select at least one fee!", "error");
-            return;
-        }
-
-        console.log("Submitting fees:", feesToSend);
-
-        put(
-            route("student-fees.update-all", loadedStudent?.id),
-            { fees: feesToSend },
-            {
-                preserveScroll: true,
-                onSuccess: () => Swal.fire("✅ Success", "Fees updated successfully!", "success"),
-                onError: (errors) => Swal.fire("❌ Error", Object.values(errors).flat().join("\n"), "error"),
-            }
-        );
     };
+
+    const totalTuition = tuitionFee * (Array.isArray(data.tuition_months) ? data.tuition_months.length : 0);
+    const checkboxStyle = (isPaid) => isPaid ? "text-gray-400" : "text-black";
 
     return (
         <div className="max-w-4xl mx-auto p-6 bg-white rounded-xl shadow-md">
-            <h2 className="text-xl font-bold mb-4">✏️ Edit Student Fee</h2>
+            <h2 className="text-xl font-bold mb-4">💰 Edit Student Fee</h2>
 
-            {/* Search */}
             <form onSubmit={handleSearch} className="mb-4 flex space-x-2">
-                <input type="text" value={searchId} onChange={e => setSearchId(e.target.value)} placeholder="Enter Student ID" className="border px-3 py-2 rounded w-full" />
+                <input
+                    type="text" value={searchId} onChange={e => setSearchId(e.target.value)}
+                    placeholder="Enter Student ID" className="border px-3 py-2 rounded w-full"
+                />
                 <button type="submit" disabled={loading} className="bg-blue-600 text-white px-4 py-2 rounded">
                     {loading ? "Searching..." : "Search"}
                 </button>
             </form>
 
-            {/* Form */}
-            {loadedStudent && (
+            {loadedStudent ? (
                 <form onSubmit={submit} className="space-y-6">
                     <p><strong>Student:</strong> {loadedStudent.student_name}</p>
-                    <p><strong>Class:</strong> {loadedStudent.schoolClass?.class_name}</p>
+                    <p><strong>Class:</strong> {loadedStudent.school_class?.class_name}</p>
 
                     {/* Tuition */}
                     <div>
-                        <h3>Tuition Fee</h3>
+                        <h3 className="font-semibold mb-2">Tuition Fee ({tuitionFee}৳/month)</h3>
                         <div className="grid grid-cols-3 gap-2">
-                            {months.map(month => {
-                                const isPaid = data.tuition_months.includes(month);
-                                return (
-                                    <label key={month} className="flex items-center space-x-2">
-                                        <input
-                                            type="checkbox"
-                                            checked={isPaid}
-                                            disabled={isPaid} // paid months disabled
-                                            onChange={() => {
-                                                const updated = data.tuition_months.includes(month)
-                                                    ? data.tuition_months.filter(m => m !== month)
-                                                    : [...data.tuition_months, month];
-                                                setData("tuition_months", updated);
-                                            }}
-                                        />
-                                        <span>{month} {isPaid && "(Paid)"}</span>
-                                    </label>
-                                )
-                            })}
+                            {months.map(m => (
+                                <label key={m} className={`flex items-center space-x-2 ${checkboxStyle(paidMonths.includes(m))}`}>
+                                    <input
+                                        type="checkbox"
+                                        checked={Array.isArray(data.tuition_months) && data.tuition_months.includes(m)}
+                                        onChange={() => {
+                                            const current = Array.isArray(data.tuition_months) ? data.tuition_months : [];
+                                            const updated = current.includes(m)
+                                                ? current.filter(x => x !== m)
+                                                : [...current, m];
+                                            setData('tuition_months', updated);
+                                        }}
+                                    />
+                                    <span>{m} {paidMonths.includes(m) && "(Already Paid)"}</span>
+                                </label>
+                            ))}
                         </div>
+                        <p className="mt-1 font-medium">Total Tuition: {totalTuition}৳</p>
                     </div>
 
                     {/* Exams */}
                     <div>
-                        <h3>Exam Fees</h3>
+                        <h3 className="font-semibold mb-2">Exam Fees</h3>
                         <div className="grid grid-cols-2 gap-2">
-                            {loadedFees.filter(f => f.fee?.type === "exam").map(cf => {
-                                const isPaid = data.exams.includes(cf.id);
-                                return (
-                                    <label key={cf.id} className="flex items-center space-x-2">
+                            {loadedFees
+                                .filter(f => f.fee?.type === "exam")
+                                .map(cf => (
+                                    <label key={cf.id} className={`flex items-center space-x-2 ${checkboxStyle(paidExamIds.includes(cf.id))}`}>
                                         <input
                                             type="checkbox"
-                                            checked={isPaid}
-                                            disabled={isPaid}
+                                            checked={Array.isArray(data.exams) && data.exams.includes(cf.id)}
                                             onChange={() => {
-                                                const updated = data.exams.includes(cf.id)
-                                                    ? data.exams.filter(x => x !== cf.id)
-                                                    : [...data.exams, cf.id];
+                                                const current = Array.isArray(data.exams) ? data.exams : [];
+                                                const updated = current.includes(cf.id)
+                                                    ? current.filter(x => x !== cf.id)
+                                                    : [...current, cf.id];
                                                 setData("exams", updated);
+                                                setPaidExamIds(updated);
                                             }}
                                         />
-                                        <span>{cf.fee.name} - {cf.amount}৳ {isPaid && "(Paid)"}</span>
+                                        <span>
+                                            {cf.fee.name} - {Number(cf.amount).toFixed(2)}৳{" "}
+                                            {paidExamIds.includes(cf.id) && "(Already Paid)"}
+                                        </span>
                                     </label>
-                                )
-                            })}
+                                ))}
                         </div>
                     </div>
 
                     {/* Admission */}
                     <div>
-                        <h3>Admission Fee</h3>
-                        <label className="flex items-center space-x-2">
-                            <input
-                                type="checkbox"
-                                checked={data.admission}
-                                disabled={!data.admission} // disable if already paid
-                                onChange={() => setData("admission", !data.admission)}
-                            />
-                            <span>
-                                Admission - {loadedFees.find(f => f.fee?.name === "Admission")?.amount || 0}৳
-                                {!data.admission && " (Paid)"}
-                            </span>
+                        <h3 className="font-semibold mb-2">Admission Fee</h3>
+                        <label className={`flex items-center space-x-2 ${checkboxStyle(admissionAlreadyPaid)}`}>
+                            <input type="checkbox" checked={!!data.admission} onChange={() => setData('admission', !data.admission)} />
+                            <span>Admission - {admissionAmount}৳ {admissionAlreadyPaid && "(Already Paid)"}</span>
                         </label>
                     </div>
 
-                    {/* Payment Method */}
-                    <div>
-                        <label>Payment Method:</label>
-                        <select className="border px-2 py-1 rounded" value={data.payment_method} onChange={e => setData("payment_method", e.target.value)}>
-                            <option value="Cash">Cash</option>
-                            <option value="Bkash">Bkash</option>
-                            <option value="Bank">Bank</option>
-                        </select>
-                    </div>
-
-                    <button type="submit" disabled={processing} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-                        Update Fees
+                    <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                        Save Payments
                     </button>
                 </form>
+            ) : (
+                <p className="text-gray-600">🔍 Please search by Student ID to continue.</p>
             )}
         </div>
     );

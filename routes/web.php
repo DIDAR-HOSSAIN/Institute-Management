@@ -89,6 +89,14 @@ Route::post('/student-fees/store', [StudentFeeController::class, 'store'])
 // Student Fee show route
 Route::get('/student-fees/{studentId}', [StudentFeeController::class, 'show'])->name('student-fees.show');
 
+// খালি ফর্ম
+Route::get('/student-fees/create/edit', [StudentFeeController::class, 'createEdit'])
+    ->name('student-fees.create-edit');
+
+// Student সার্চ দিয়ে ডাটা ফেচ
+Route::get('/student-fees/fetch-edit/{studentId}', [StudentFeeController::class, 'fetchEdit'])
+    ->name('student-fees.fetch-edit');
+    
 // সব ফি এডিট
 Route::get('/student-fees/{student}/edit-all', [StudentFeeController::class, 'editAll'])
     ->name('student-fees.edit-all');

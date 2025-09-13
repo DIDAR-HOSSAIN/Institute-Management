@@ -196,6 +196,51 @@ class StudentFeeController extends Controller
         //
     }
 
+    public function createEdit()
+    {
+        // সমস্ত ClassFee + Fee relation নিয়ে আসি, exam সহ
+        $fees = ClassFee::with('fee')->get();
+
+        return Inertia::render('Institute-Managements/StudentFee/EditStudentFee', [
+            'student' => null,
+            'fees' => $fees,
+            'studentFees' => [],
+            'paidTuitionMonths' => [],
+            'paidExams' => [],
+            'admissionPaid' => false,
+        ]);
+    }
+
+    public function fetchEdit($studentId)
+    {
+        $student = Student::with('schoolClass')->findOrFail($studentId);
+
+        $fees = ClassFee::with('fee')
+            ->where('class_id', $student->school_class_id)
+            ->get();
+
+        $studentFees = StudentFee::with('payments.classFee.fee')
+            ->where('student_id', $student->id)
+            ->get();
+
+        // paid info
+        $payments = $studentFees->flatMap(fn($sf) => $sf->payments);
+
+        $paidTuitionMonths = $payments->where('type', 'tuition')->pluck('month')->unique()->values();
+        $paidExams = $payments->where('type', 'exam')->pluck('class_fee_id')->unique()->values();
+        $admissionPaid = $payments->where('type', 'admission')->isNotEmpty();
+
+        return response()->json([
+            'student' => $student,
+            'fees' => $fees,
+            'studentFees' => $studentFees,
+            'paidTuitionMonths' => $paidTuitionMonths,
+            'paidExams' => $paidExams,
+            'admissionPaid' => $admissionPaid,
+        ]);
+    }
+
+
     public function editAll($student_id)
     {
         $student = Student::with('schoolClass')->findOrFail($student_id);
@@ -215,71 +260,101 @@ class StudentFeeController extends Controller
 
     public function updateAll(Request $request, $student_id)
     {
-        $request->validate([
-            'fees' => 'required|array',
-            'fees.*.fee_id' => 'required|exists:fees,id',
-            'fees.*.paid_amount' => 'required|numeric|min:0',
-            'fees.*.payment_method' => 'required|string|in:Cash,Bkash,Bank',
-            'fees.*.months' => 'nullable|array',
-        ]);
-
         DB::beginTransaction();
 
         try {
             $student = Student::with('schoolClass')->findOrFail($student_id);
 
-            foreach ($request->fees as $feeData) {
-                // ClassFee find
+            // Parent record
+            $studentFeeParent = StudentFee::firstOrCreate(
+                ['student_id' => $student_id],
+                ['total_paid' => 0, 'last_payment_date' => now()]
+            );
+
+            // পুরানো পেমেন্ট মুছে দেই
+            $studentFeeParent->payments()->delete();
+
+            $totalPaid = 0;
+
+            // ✅ Tuition Months
+            if (!empty($request->tuition_months)) {
                 $classFee = ClassFee::where('class_id', $student->school_class_id)
-                    ->where('fee_id', $feeData['fee_id'])
+                    ->whereHas('fee', fn($q) => $q->where('type', 'recurring'))
                     ->first();
 
-                if (!$classFee) continue;
-
-                // Parent record
-                $studentFee = StudentFee::firstOrCreate(
-                    ['student_id' => $student_id, 'class_fee_id' => $classFee->id],
-                    ['total_paid' => 0, 'last_payment_date' => now()]
-                );
-
-                // Delete old payments
-                $studentFee->payments()->delete();
-
-                // Insert new payments
-                $months = $feeData['months'] ?? [null]; // tuition/exam/admission
-
-                foreach ($months as $month) {
-                    $studentFee->payments()->create([
-                        'student_fee_id' => $studentFee->id,
+                foreach ($request->tuition_months as $month) {
+                    $studentFeeParent->payments()->create([
                         'class_fee_id' => $classFee->id,
-                        'type' => $classFee->fee->type ?? 'other',
+                        'type' => 'tuition',
                         'month' => $month,
-                        'paid_amount' => $feeData['paid_amount'],
-                        'payment_method' => $feeData['payment_method'],
                         'payment_date' => now(),
+                        'paid_amount' => $classFee->amount,
+                        'payment_method' => $request->payment_method,
                     ]);
+                    $totalPaid += $classFee->amount;
                 }
-
-                // Update parent totals
-                $studentFee->update([
-                    'total_paid' => $studentFee->payments()->sum('paid_amount'),
-                    'last_payment_date' => now(),
-                ]);
             }
 
-            DB::commit();
+            // ✅ Admission Fee
+            if ($request->admission) {
+                $classFee = ClassFee::where('class_id', $student->school_class_id)
+                    ->whereHas('fee', fn($q) => $q->where('type', 'one_time'))
+                    ->first();
 
-            return redirect()->route('student-fees.index')
-                ->with('success', 'All fees updated successfully!');
+                $studentFeeParent->payments()->create([
+                    'class_fee_id' => $classFee->id,
+                    'type' => 'admission',
+                    'month' => null,
+                    'payment_date' => now(),
+                    'paid_amount' => $classFee->amount,
+                    'payment_method' => $request->payment_method,
+                ]);
+                $totalPaid += $classFee->amount;
+            }
+
+            // ✅ Exam Fees
+            if (!empty($request->exams)) {
+                foreach ($request->exams as $feeId) {
+                    $classFee = ClassFee::where('class_id', $student->school_class_id)
+                        ->where('id', $feeId) // <-- change here
+                        ->first();
+
+                    if (!$classFee) continue;
+
+                    $alreadyPaid = $studentFeeParent->payments()
+                        ->where('class_fee_id', $classFee->id)
+                        ->where('type', 'exam')
+                        ->exists();
+
+                    if ($alreadyPaid) continue;
+
+                    $studentFeeParent->payments()->create([
+                        'class_fee_id' => $classFee->id,
+                        'type' => 'exam',
+                        'month' => $classFee->fee->name,
+                        'payment_date' => now(),
+                        'paid_amount' => $classFee->amount,
+                        'payment_method' => $request->payment_method,
+                    ]);
+                    $totalPaid += $classFee->amount;
+                }
+            }
+
+            // ✅ Update parent
+            $studentFeeParent->update([
+                'total_paid' => $totalPaid,
+                'last_payment_date' => now(),
+            ]);
+
+            DB::commit();
+            return back()->with('success', 'Fees updated successfully!');
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('UpdateAll Student Fees failed', ['error' => $e->getMessage()]);
-
-            return back()->withErrors([
-                'error' => 'Update failed: ' . $e->getMessage()
-            ])->withInput();
+            dd("Error", $e->getMessage(), $e->getTraceAsString());
         }
     }
+
+
 
 
     /**
