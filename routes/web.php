@@ -126,6 +126,9 @@ Route::get('/students/{studentId}/exam/{examId}/results', [ResultController::cla
 
 Route::post('/student/results', [ResultController::class, 'storeResultSingle'])->name('student.results.store');
 
+Route::get('/students/{studentId}/exam/{examId}/marksheet', [ResultController::class, 'marksheet'])->name('students.exam.marksheet');
+
+
 Route::resource('results', ResultController::class);
 
 

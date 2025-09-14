@@ -9,7 +9,12 @@ class Subject extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['school_class_id', 'subject_name', 'subject_code', 'full_mark', 'pass_mark'];
+    protected $fillable = ['subject_name', 'subject_code', 'full_mark', 'pass_mark'];
+
+    public function classSubjects()
+    {
+        return $this->hasMany(ClassSubject::class);
+    }
 
     public function schoolClass()
     {
