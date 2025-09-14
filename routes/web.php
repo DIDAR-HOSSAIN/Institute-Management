@@ -116,12 +116,15 @@ Route::get('/attendance/sync', [StudentAttendanceController::class, 'sync'])->na
 Route::resource('/attendance', StudentAttendanceController::class);
 
 //student result Route
-Route::get('/results/create/single', [ResultController::class, 'createResultSingle'])
-    ->name('student-fees.create-result');
+Route::get('/student/results/create', [ResultController::class, 'createResultSingle'])
+    ->name('student.results.create');
 
 Route::get('/results/fetch-student/{id}', [ResultController::class, 'fetchStudentData'])->name('results.fetchStudent');
 
-Route::post('/results', [ResultController::class, 'storeResultSingle'])->name('result.store');
+Route::get('/students/{studentId}/exam/{examId}/results', [ResultController::class, 'fetchStudentExamData'])
+    ->name('students.exam.results');
+
+Route::post('/student/results', [ResultController::class, 'storeResultSingle'])->name('student.results.store');
 
 Route::resource('results', ResultController::class);
 

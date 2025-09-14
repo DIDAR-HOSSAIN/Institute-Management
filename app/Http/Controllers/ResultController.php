@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateResultRequest;
 use App\Models\Exam;
 use App\Models\Student;
 use App\Models\Subject;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class ResultController extends Controller
@@ -36,11 +37,13 @@ class ResultController extends Controller
     /**
      * Store a newly created resource in storage.
      */
+
     public function store(StoreResultRequest $request)
     {
-        $examId = $request->exam_id;
+        $examId = $request->validated()['exam_id'];
+        $results = $request->validated()['results'];
 
-        foreach ($request->results as $studentId => $subjects) {
+        foreach ($results as $studentId => $subjects) {
             foreach ($subjects as $subjectId => $marks) {
                 Result::updateOrCreate(
                     [
@@ -70,60 +73,89 @@ class ResultController extends Controller
     }
 
 
+
     //create Result Single Studnent according id
 
     public function createResultSingle()
     {
-        return Inertia::render('Institute-Managements/Results/CreateResultSingle', [
-            'exams' => Exam::all(),
-            'subjects' => Subject::all(),
-            'students' => Student::with('schoolClass', 'section')->get(),
-        ]);
+        return Inertia::render('Institute-Managements/Results/CreateResultSingle');
     }
 
     public function fetchStudentData($studentId)
     {
-        $student = Student::with(['schoolClass', 'section'])->findOrFail($studentId);
+        $student = Student::with('schoolClass')->findOrFail($studentId);
 
-        $subjects = Subject::all();
-        $exams = Exam::all();
-
-        // আগের Result গুলো Student ID দিয়ে নিয়ে আসা
-        $results = Result::where('student_id', $studentId)->get();
+        $subjects = Subject::all(['id', 'subject_name']);
+        $exams = Exam::all(['id', 'exam_name']);
 
         return response()->json([
-            'student' => $student,
+            'student' => [
+                'id' => $student->id,
+                'name' => $student->student_name, // column name ঠিক করো
+                'class_name' => $student->schoolClass?->class_name,
+            ],
             'subjects' => $subjects,
             'exams' => $exams,
-            'results' => $results, // নতুন করে পাঠানো হচ্ছে
+        ]);
+    }
+
+    // ResultController.php
+    public function fetchStudentExamData($studentId, $examId)
+    {
+        // student fetch
+        $student = Student::with('schoolClass')->find($studentId);
+        if (!$student) {
+            return response()->json(['message' => 'Student not found'], 404);
+        }
+
+        // subjects
+        $subjects = Subject::all(['id', 'subject_name']);
+
+        // results
+        $results = Result::where('student_id', $studentId)
+            ->where('exam_id', $examId)
+            ->get(['subject_id', 'marks_obtained']);
+
+        // convert to {subject_id: marks} format
+        $marks = $results->pluck('marks_obtained', 'subject_id');
+
+        return response()->json([
+            'student' => [
+                'id' => $student->id,
+                'name' => $student->student_name, // adjust column name
+                'class_name' => $student->schoolClass?->class_name
+            ],
+            'subjects' => $subjects,
+            'results' => $marks
         ]);
     }
 
 
-    public function storeResultSingle(StoreResultRequest $request)
+
+
+    public function storeResultSingle(Request $request)
     {
         $examId = $request->exam_id;
+        $studentId = $request->student_id;
 
-        foreach ($request->results as $studentId => $subjects) {
-            foreach ($subjects as $subjectId => $marks) {
-                Result::updateOrCreate(
-                    [
-                        'student_id' => $studentId,
-                        'exam_id' => $examId,
-                        'subject_id' => $subjectId,
-                    ],
-                    [
-                        'marks_obtained' => $marks,
-                        'grade' => $this->calculateSingleGrade($marks),
-                    ]
-                );
-            }
+        foreach ($request->marks as $subjectId => $marks) {
+            Result::updateOrCreate(
+                [
+                    'student_id' => $studentId,
+                    'exam_id' => $examId,
+                    'subject_id' => $subjectId,
+                ],
+                [
+                    'marks_obtained' => $marks,
+                    'grade' => $this->calculateStudentGrade($marks),
+                ]
+            );
         }
 
         return back()->with('success', 'Results saved successfully!');
     }
 
-    private function calculateSingleGrade($marks)
+    private function calculateStudentGrade($marks)
     {
         if ($marks >= 80) return 'A+';
         if ($marks >= 70) return 'A';
