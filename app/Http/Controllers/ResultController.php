@@ -20,9 +20,9 @@ class ResultController extends Controller
     public function index(Request $request)
     {
         $search = $request->input('search');
-        $perPage = (int) $request->input('per_page', 20); // default 20
+        $examId = $request->input('exam_id'); // ✅ নতুন exam filter
+        $perPage = (int) $request->input('per_page', 20);
 
-        // যদি ভুলক্রমে 0 বা invalid আসে তবে fallback 20
         if ($perPage <= 0) {
             $perPage = 20;
         }
@@ -33,24 +33,30 @@ class ResultController extends Controller
                     $q->where('student_name', 'like', "%{$search}%")
                         ->orWhere('roll_number', 'like', "%{$search}%")
                         ->orWhere('id', $search);
-                })
-                    ->orWhereHas('exam', function ($q) use ($search) {
-                        $q->where('exam_name', 'like', "%{$search}%");
-                    });
+                });
+            })
+            ->when($examId, function ($query, $examId) {
+                $query->where('exam_id', $examId);
             })
             ->orderBy('student_id')
             ->orderBy('exam_id')
-            ->paginate($perPage) // ✅ dynamic paginate
+            ->paginate($perPage)
             ->withQueryString();
+
+        // exam dropdown data পাঠানো
+        $exams = Exam::select('id', 'exam_name')->get();
 
         return Inertia::render('Institute-Managements/Results/ViewResult', [
             'results' => $results,
+            'exams'   => $exams,
             'filters' => [
-                'search' => $search,
+                'search'   => $search,
+                'exam_id'  => $examId,
                 'per_page' => $perPage,
             ],
         ]);
     }
+
 
 
     /**

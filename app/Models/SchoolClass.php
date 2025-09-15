@@ -31,4 +31,10 @@ class SchoolClass extends Model
         return $this->hasMany(ClassFee::class);
     }
 
+    public function subjects()
+    {
+        return $this->belongsToMany(Subject::class, 'class_subjects')
+            ->withTimestamps();
+    }
+
 }

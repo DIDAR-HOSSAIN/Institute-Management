@@ -2,55 +2,74 @@ import React, { useState } from "react";
 import { usePage, router, Link } from "@inertiajs/react";
 
 const ViewResult = () => {
-    const { results, filters } = usePage().props;
+    const { results, exams, filters } = usePage().props;
+
     const [search, setSearch] = useState(filters.search || "");
+    const [examId, setExamId] = useState(filters.exam_id || "");
     const [perPage, setPerPage] = useState(filters.per_page || 20);
 
     const handleSearch = (e) => {
         e.preventDefault();
-        router.get(route("results.index"), { search, per_page: perPage }, { preserveState: true });
+        router.get(route("results.index"), {
+            search,
+            exam_id: examId,
+            per_page: perPage,
+        }, { preserveState: true });
     };
 
     const handlePerPageChange = (e) => {
         setPerPage(e.target.value);
-        router.get(route("results.index"), { search, per_page: e.target.value }, { preserveState: true });
-    };
-
-    const handleDelete = (id) => {
-        if (confirm("Are you sure you want to delete this result?")) {
-            router.delete(route("results.destroy", id), { preserveState: true });
-        }
+        router.get(route("results.index"), {
+            search,
+            exam_id: examId,
+            per_page: e.target.value,
+        }, { preserveState: true });
     };
 
     return (
         <div className="max-w-6xl mx-auto bg-white shadow rounded p-6">
             <h2 className="text-xl font-bold text-center">All Results</h2>
 
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-3">
-                <form onSubmit={handleSearch} className="flex gap-2">
-                    <input
-                        type="text"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Search by ID / Name / Exam"
-                        className="border rounded px-3 py-2 w-64"
-                    />
-                    <button
-                        type="submit"
-                        className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-                    >
-                        Search
-                    </button>
-                </form>
+            {/* 🔍 Filter Form */}
+            <form onSubmit={handleSearch} className="flex flex-wrap gap-2 mb-4">
+                <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search by ID / Name / Roll"
+                    className="border rounded px-3 py-2 w-64"
+                />
+
+                {/* ✅ Exam Dropdown */}
+                <select
+                    value={examId}
+                    onChange={(e) => setExamId(e.target.value)}
+                    className="border rounded px-3 py-2"
+                >
+                    <option value="">-- Select Exam --</option>
+                    {exams.map((exam) => (
+                        <option key={exam.id} value={exam.id}>
+                            {exam.exam_name}
+                        </option>
+                    ))}
+                </select>
+
+                <button
+                    type="submit"
+                    className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                >
+                    Search
+                </button>
 
                 <Link
                     href={route("student.results.create")}
-                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 ml-auto"
                 >
                     + Add Result
                 </Link>
-            </div>
+            </form>
 
+            {/* 📊 Table */}
             {results.data.length > 0 ? (
                 <div className="overflow-x-auto">
                     <table className="w-full border-collapse border border-gray-300 text-sm">
@@ -64,7 +83,7 @@ const ViewResult = () => {
                                 <th className="border px-3 py-2">Subject</th>
                                 <th className="border px-3 py-2">Marks</th>
                                 <th className="border px-3 py-2">Grade</th>
-                                <th className="border px-3 py-2">Actions</th>
+                                <th className="border px-3 py-2">Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -111,6 +130,7 @@ const ViewResult = () => {
                 <p>No results found.</p>
             )}
 
+            {/* 🔽 Pagination + Per Page */}
             <div className="flex justify-between items-center mt-4">
                 <div className="flex items-center gap-2">
                     <label htmlFor="perPage">Show per page:</label>
@@ -118,7 +138,7 @@ const ViewResult = () => {
                         id="perPage"
                         value={perPage}
                         onChange={handlePerPageChange}
-                        className="border rounded px-2 py-1 px-8"
+                        className="border rounded px-6 py-1"
                     >
                         <option value="20">20</option>
                         <option value="50">50</option>
