@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\ClassFeeController;
 use App\Http\Controllers\ClassScheduleController;
 use App\Http\Controllers\ClassSubjectController;
 use App\Http\Controllers\ContactController;
@@ -45,8 +46,12 @@ use Inertia\Inertia;
 Route::resource('employees', EmployeeController::class);
 Route::resource('rosters', RosterController::class);
 
-// school management
+
+//Student Admission
 Route::resource('students', StudentController::class);
+
+//add Class, add fee Name & Assign Fee to Class
+Route::resource('class-fees', ClassFeeController::class);
 Route::resource('classes', SchoolClassController::class);
 Route::resource('sections', SectionController::class);
 Route::resource('class-schedule', ClassScheduleController::class);
@@ -111,9 +116,9 @@ Route::post('/student/results', [ResultController::class, 'storeResultSingle'])-
 
 Route::get('/students/{studentId}/exam/{examId}/marksheet', [ResultController::class, 'marksheet'])->name('students.exam.marksheet');
 
-
 Route::resource('results', ResultController::class);
 
+//subject Assign to class
 Route::resource('class-subject', ClassSubjectController::class);
 
 

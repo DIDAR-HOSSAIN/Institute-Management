@@ -9,7 +9,7 @@ class ClassFee extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['class_id', 'fee_id', 'amount'];
+    protected $fillable = ['school_class_id', 'fee_id', 'amount'];
 
     public function schoolClass()
     {

@@ -209,21 +209,43 @@ export default function ClassSubjectIndex({ classes, subjects }) {
             </div>
 
             {/* -------- Class-wise Subject View -------- */}
-            <div className="p-4 border rounded">
-                <h3 className="text-lg font-semibold mb-3">Class-wise Subjects</h3>
-                {classes?.map((cls) => (
-                    <div key={cls.id} className="mb-4 border-b pb-2">
-                        <h4 className="font-bold">{cls.class_name}</h4>
-                        <ul className="list-disc pl-5">
+            <div className="p-6 bg-gray-50 rounded-lg shadow-sm">
+                <h3 className="text-2xl font-semibold mb-6 text-gray-800 border-b pb-2">
+                    Class-wise Subjects
+                </h3>
+
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                    {classes?.map((cls) => (
+                        <div
+                            key={cls.id}
+                            className="bg-white rounded-xl shadow-md hover:shadow-lg transition p-5 border"
+                        >
+                            <h4 className="text-lg font-bold text-indigo-600 mb-3">
+                                {cls.class_name}
+                            </h4>
+
                             {cls.subjects?.length > 0 ? (
-                                cls.subjects.map((sub) => <li key={sub.id}>{sub.subject_name}</li>)
+                                <ul className="space-y-2">
+                                    {cls.subjects.map((sub) => (
+                                        <li
+                                            key={sub.id}
+                                            className="flex items-center gap-2 text-gray-700 text-sm"
+                                        >
+                                            <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
+                                            {sub.subject_name}
+                                        </li>
+                                    ))}
+                                </ul>
                             ) : (
-                                <li className="text-gray-500">No subjects assigned</li>
+                                <p className="text-gray-400 text-sm italic">
+                                    No subjects assigned
+                                </p>
                             )}
-                        </ul>
-                    </div>
-                ))}
+                        </div>
+                    ))}
+                </div>
             </div>
+
         </div>
     );
 }

@@ -50,7 +50,7 @@ class StudentFeeController extends Controller
         $student = Student::with('schoolClass')->findOrFail($studentId);
 
         $fees = ClassFee::with('fee')
-            ->where('class_id', $student->school_class_id)
+            ->where('school_class_id', $student->school_class_id)
             ->get();
 
         $studentFees = StudentFee::with('classFee.fee', 'payments')
@@ -82,7 +82,7 @@ class StudentFeeController extends Controller
 
             // Tuition fees
             if (!empty($request->tuition_months)) {
-                $tuitionClassFee = ClassFee::where('class_id', $studentFee->student->school_class_id)
+                $tuitionClassFee = ClassFee::where('school_class_id', $studentFee->student->school_class_id)
                     ->whereHas('fee', fn($q) => $q->where('name', 'Tuition'))
                     ->first();
 
@@ -108,7 +108,7 @@ class StudentFeeController extends Controller
 
             // Admission fee
             if ($request->admission) {
-                $admissionClassFee = ClassFee::where('class_id', $studentFee->student->school_class_id)
+                $admissionClassFee = ClassFee::where('school_class_id', $studentFee->student->school_class_id)
                     ->whereHas('fee', fn($q) => $q->where('name', 'Admission'))
                     ->first();
 
@@ -216,7 +216,7 @@ class StudentFeeController extends Controller
         $student = Student::with('schoolClass')->findOrFail($studentId);
 
         $fees = ClassFee::with('fee')
-            ->where('class_id', $student->school_class_id)
+            ->where('school_class_id', $student->school_class_id)
             ->get();
 
         $studentFees = StudentFee::with('payments.classFee.fee')
@@ -262,7 +262,7 @@ class StudentFeeController extends Controller
 
             // ✅ Tuition Months
             if (!empty($request->tuition_months)) {
-                $classFee = ClassFee::where('class_id', $student->school_class_id)
+                $classFee = ClassFee::where('school_class_id', $student->school_class_id)
                     ->whereHas('fee', fn($q) => $q->where('type', 'recurring'))
                     ->first();
 
@@ -281,7 +281,7 @@ class StudentFeeController extends Controller
 
             // ✅ Admission Fee
             if ($request->admission) {
-                $classFee = ClassFee::where('class_id', $student->school_class_id)
+                $classFee = ClassFee::where('school_class_id', $student->school_class_id)
                     ->whereHas('fee', fn($q) => $q->where('type', 'one_time'))
                     ->first();
 
@@ -299,7 +299,7 @@ class StudentFeeController extends Controller
             // ✅ Exam Fees
             if (!empty($request->exams)) {
                 foreach ($request->exams as $feeId) {
-                    $classFee = ClassFee::where('class_id', $student->school_class_id)
+                    $classFee = ClassFee::where('school_class_id', $student->school_class_id)
                         ->where('id', $feeId) // <-- change here
                         ->first();
 
