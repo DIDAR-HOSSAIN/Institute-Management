@@ -59,7 +59,8 @@ class SchoolClassController extends Controller
      */
     public function create()
     {
-        return Inertia::render('Institute-Managements/School-Class/CreateSchoolClass');
+        $classes = SchoolClass::with(['sections', 'schedules'])->get();
+        return Inertia::render('Institute-Managements/School-Class/CreateSchoolClass',['classes' =>$classes]);
     }
 
     /**

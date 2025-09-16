@@ -16,7 +16,7 @@ class ClassScheduleController extends Controller
      */
     public function index()
 {
-    $schedules = ClassSchedule::with(['classes', 'section'])->get();
+    $schedules = ClassSchedule::with(['schoolClass', 'section'])->get();
     return Inertia::render('Institute-Managements/ClassSchedule/ViewClassSchedule', [
         'schedules' => $schedules
     ]);
@@ -86,7 +86,7 @@ class ClassScheduleController extends Controller
         'end_time'        => 'required|date_format:H:i|after:start_time',
     ]);
 
-    $schedule->update($validated);
+        $classSchedule->update($validated);
 
     return redirect()->route('class-schedule.index')
                      ->with('success', 'Schedule updated successfully!');
