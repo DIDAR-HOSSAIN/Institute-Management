@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { usePage, router, Link } from "@inertiajs/react";
 
 const ViewResult = () => {
-    const { results, exams, filters } = usePage().props;
+    const { results, exams, filters, auth } = usePage().props;
 
     const [search, setSearch] = useState(filters.search || "");
     const [examId, setExamId] = useState(filters.exam_id || "");
@@ -27,6 +27,14 @@ const ViewResult = () => {
     };
 
     return (
+        <AdminDashboardLayout
+            user={auth.user}
+            header={
+                <h1 className="font-semibold text-xl text-gray-800 leading-tight">
+                    Manage Results
+                </h1>
+            }
+        >
         <div className="max-w-6xl mx-auto bg-white shadow rounded p-6">
             <h2 className="text-xl font-bold text-center">All Results</h2>
 
@@ -102,7 +110,7 @@ const ViewResult = () => {
                                             href={route('students.exam.marksheet', [r.student_id, r.exam_id])}
                                             className="bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
                                         >
-                                            Show
+                                            Mark Sheet
                                         </Link>
                                         <Link
                                             href={route('results.edit', r.id)}
@@ -162,6 +170,7 @@ const ViewResult = () => {
                 </div>
             </div>
         </div>
+            </AdminDashboardLayout>
     );
 };
 

@@ -1,7 +1,8 @@
 import React from "react";
 import { Link } from "@inertiajs/react";
+import AdminDashboardLayout from "@/backend/Dashboard/AdminDashboardLayout";
 
-const ShowStudentFee = ({ studentFee }) => {
+const ShowStudentFee = ({ studentFee, auth }) => {
     if (!studentFee) {
         return (
             <div className="p-6 text-center text-gray-500">
@@ -17,6 +18,14 @@ const ShowStudentFee = ({ studentFee }) => {
     });
 
     return (
+        <AdminDashboardLayout
+            user={auth.user}
+            header={
+                <h1 className="font-semibold text-xl text-gray-800 leading-tight">
+                    Manage Students
+                </h1>
+            }
+        >
         <div className="p-6 max-w-4xl mx-auto">
             <h1 className="text-3xl font-bold mb-6 text-gray-800">
                 💰 Student Fee Details
@@ -84,6 +93,7 @@ const ShowStudentFee = ({ studentFee }) => {
                 </Link>
             </div>
         </div>
+    </AdminDashboardLayout>
     );
 };
 

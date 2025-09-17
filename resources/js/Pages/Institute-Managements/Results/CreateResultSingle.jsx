@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { useForm } from "@inertiajs/react";
 import axios from "axios";
+import AdminDashboardLayout from "@/backend/Dashboard/AdminDashboardLayout";
 
-export default function CreateResultSingle() {
+export default function CreateResultSingle({auth}) {
     const [student, setStudent] = useState(null);
     const [exams, setExams] = useState([]);
     const [subjects, setSubjects] = useState([]);
@@ -67,6 +68,14 @@ export default function CreateResultSingle() {
     };
 
     return (
+        <AdminDashboardLayout
+            user={auth.user}
+            header={
+                <h1 className="font-semibold text-xl text-gray-800 leading-tight">
+                    Manage Students
+                </h1>
+            }
+        >
         <div className="max-w-3xl mx-auto bg-white shadow rounded p-6">
             <h2 className="text-xl font-bold mb-4">Single Student Result Entry</h2>
 
@@ -143,5 +152,6 @@ export default function CreateResultSingle() {
                 </form>
             )}
         </div>
+    </AdminDashboardLayout>
     );
 }

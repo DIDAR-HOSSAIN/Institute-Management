@@ -1,11 +1,20 @@
 import React from 'react';
 import { Link, usePage } from '@inertiajs/react';
+import AdminDashboardLayout from '@/backend/Dashboard/AdminDashboardLayout';
 
-const ViewStudents = () => {
+const ViewStudents = ({auth}) => {
     const { students, flash } = usePage().props;
     console.log('STUDENTS', students);
 
     return (
+        <AdminDashboardLayout
+            user={auth.user}
+            header={
+                <h1 className="font-semibold text-xl text-gray-800 leading-tight">
+                   Manage Students
+                </h1>
+            }
+        >
         <div className="max-w-5xl mx-auto p-4">
             <div className="flex justify-between items-center mb-4">
                 <h1 className="text-2xl font-semibold">Students</h1>
@@ -62,6 +71,7 @@ const ViewStudents = () => {
                 </table>
             </div>
         </div>
+        </AdminDashboardLayout>
     );
 };
 

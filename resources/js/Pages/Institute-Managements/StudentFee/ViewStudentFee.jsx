@@ -1,7 +1,8 @@
 import React from 'react';
 import { Link } from '@inertiajs/react';
+import AdminDashboardLayout from '@/backend/Dashboard/AdminDashboardLayout';
 
-const ViewStudentFee = ({ studentFees }) => {
+const ViewStudentFee = ({ studentFees, auth }) => {
     // Payments group by type
     const groupPaymentsByType = (payments) => {
         const grouped = {};
@@ -13,6 +14,14 @@ const ViewStudentFee = ({ studentFees }) => {
     };
 
     return (
+        <AdminDashboardLayout
+            user={auth.user}
+            header={
+                <h1 className="font-semibold text-xl text-gray-800 leading-tight">
+                    Manage Students
+                </h1>
+            }
+        >
         <div className="p-6 max-w-6xl mx-auto">
             <h1 className="text-3xl font-bold mb-6 text-gray-800">💰 Student Fees</h1>
 
@@ -112,6 +121,7 @@ const ViewStudentFee = ({ studentFees }) => {
                 </table>
             </div>
         </div>
+    </AdminDashboardLayout>
     );
 };
 

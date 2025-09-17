@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useForm } from "@inertiajs/react";
 import axios from "axios";
+import AdminDashboardLayout from "@/backend/Dashboard/AdminDashboardLayout";
 
-export default function CreateStudentFee({ student, fees = [], studentFees = [] }) {
+export default function CreateStudentFee({ student, fees = [], studentFees = [], auth }) {
     const { data, setData, post } = useForm({
         student_id: student?.id || "",
         tuition_months: [],
@@ -115,6 +116,14 @@ export default function CreateStudentFee({ student, fees = [], studentFees = [] 
     const totalTuition = tuitionFee * (data.tuition_months?.length || 0);
 
     return (
+        <AdminDashboardLayout
+            user={auth.user}
+            header={
+                <h1 className="font-semibold text-xl text-gray-800 leading-tight">
+                    Manage Students
+                </h1>
+            }
+        >
         <div className="max-w-4xl mx-auto p-6 bg-white rounded-xl shadow-md">
             <h2 className="text-xl font-bold mb-4">💰 Collect Fee</h2>
 
@@ -218,5 +227,6 @@ export default function CreateStudentFee({ student, fees = [], studentFees = [] 
                 <p className="text-gray-600">🔍 Please search by Student ID to continue.</p>
             )}
         </div>
+    </AdminDashboardLayout>
     );
 }

@@ -6,9 +6,9 @@ const SidebarMenu = () => {
     const { auth } = usePage().props;
 
     const [dropdownState, setDropdownState] = useState({
-        generalMemberDropdown: false,
-        donorDropdown: false,
-        sliderDropdown: false,
+        studentDropdown: false,
+        feeCollectionDropdown: false,
+        resultDropdown: false,
         categoryDropdown: false,
         payrollDropdown: false,
         settings: false,
@@ -25,15 +25,15 @@ const SidebarMenu = () => {
         <div>
             <div className="flex">
                 <button
-                    onClick={() => toggleDropdown("generalMemberDropdown")}
+                    onClick={() => toggleDropdown("studentDropdown")}
                     className="bg-blue-400 hover:bg-white font-bold btn w-full text-lg rounded"
                 >
-                    {dropdownState.generalMemberDropdown
-                        ? "General Member ▲"
-                        : "General Member ▼"}
+                    {dropdownState.studentDropdown
+                        ? "Admission ▲"
+                        : "Admission ▼"}
                 </button>
             </div>
-            {dropdownState.generalMemberDropdown && (
+            {dropdownState.studentDropdown && (
                 <div className="flex flex-col gap-1">
                     {hasAnyRole(auth.user, [
                         "super-admin",
@@ -41,13 +41,13 @@ const SidebarMenu = () => {
                         "sub-admin",
                         "user",
                     ]) && (
-                        <Link
-                            href="/general/members/create"
-                            className="hover:bg-yellow-200 font-bold btn btn-blue rounded"
-                        >
-                            Add New Member
-                        </Link>
-                    )}
+                            <Link
+                                href="/students/create"
+                                className="hover:bg-yellow-200 font-bold btn btn-blue rounded"
+                            >
+                                Add New Student
+                            </Link>
+                        )}
 
                     {hasAnyRole(auth.user, [
                         "super-admin",
@@ -56,27 +56,27 @@ const SidebarMenu = () => {
                         "user",
                         "general",
                     ]) && (
-                        <Link
-                            href="/general/members"
-                            className="hover:bg-yellow-200 font-bold btn btn-blue rounded"
-                        >
-                            Manage Members
-                        </Link>
-                    )}
+                            <Link
+                                href="/students"
+                                className="hover:bg-yellow-200 font-bold btn btn-blue rounded"
+                            >
+                                Manage Students
+                            </Link>
+                        )}
                 </div>
             )}
 
             <div className="flex">
                 <button
-                    onClick={() => toggleDropdown("doonorDropdown")}
+                    onClick={() => toggleDropdown("feeCollectionDropdown")}
                     className="bg-blue-400 hover:bg-white font-bold btn w-full text-lg rounded"
                 >
-                    {dropdownState.doonorDropdown
-                        ? "Donors ▲"
-                        : "Donors ▼"}
+                    {dropdownState.feeCollectionDropdown
+                        ? "Fee Collection ▲"
+                        : "Fee Collection ▼"}
                 </button>
             </div>
-            {dropdownState.doonorDropdown && (
+            {dropdownState.feeCollectionDropdown && (
                 <div className="flex flex-col gap-1">
                     {hasAnyRole(auth.user, [
                         "super-admin",
@@ -84,13 +84,13 @@ const SidebarMenu = () => {
                         "sub-admin",
                         "user",
                     ]) && (
-                        <Link
-                            href="/donors/create"
-                            className="hover:bg-yellow-200 font-bold btn btn-blue rounded"
-                        >
-                            Add Donor
-                        </Link>
-                    )}
+                            <Link
+                                href="/student-fees/create"
+                                className="hover:bg-yellow-200 font-bold btn btn-blue rounded"
+                            >
+                                Fee Collection
+                            </Link>
+                        )}
 
                     {hasAnyRole(auth.user, [
                         "super-admin",
@@ -99,13 +99,73 @@ const SidebarMenu = () => {
                         "user",
                         "general",
                     ]) && (
-                        <Link
-                            href="/donors"
-                            className="hover:bg-yellow-200 font-bold btn btn-blue rounded"
-                        >
-                            Manage Donors
-                        </Link>
-                    )}
+                            <Link
+                                href="/student-fees"
+                                className="hover:bg-yellow-200 font-bold btn btn-blue rounded"
+                            >
+                                Manage Collection
+                            </Link>
+                        )}
+                </div>
+            )}
+
+
+            <div className="flex">
+                <button
+                    onClick={() => toggleDropdown("resultDropdown")}
+                    className="bg-blue-400 hover:bg-white font-bold btn w-full text-lg rounded"
+                >
+                    {dropdownState.resultDropdown
+                        ? "Result Generate ▲"
+                        : "Result Generate ▼"}
+                </button>
+            </div>
+            {dropdownState.resultDropdown && (
+                <div className="flex flex-col gap-1">
+                    {hasAnyRole(auth.user, [
+                        "super-admin",
+                        "admin",
+                        "sub-admin",
+                        "user",
+                    ]) && (
+                            <Link
+                                href="/student/results/create"
+                                className="hover:bg-yellow-200 font-bold btn btn-blue rounded"
+                            >
+                                Result Generate (Single Student)
+                            </Link>
+                        )}
+
+                    {hasAnyRole(auth.user, [
+                        "super-admin",
+                        "admin",
+                        "sub-admin",
+                        "user",
+                        "general",
+                    ]) && (
+                            <Link
+                                href="/results/create"
+                                className="hover:bg-yellow-200 font-bold btn btn-blue rounded"
+                            >
+                                Result Generate (Exam wise)
+                            </Link>
+                        )}
+
+                    {hasAnyRole(auth.user, [
+                        "super-admin",
+                        "admin",
+                        "sub-admin",
+                        "user",
+                        "general",
+                    ]) && (
+                            <Link
+                                href="/results"
+                                className="hover:bg-yellow-200 font-bold btn btn-blue rounded"
+                            >
+                                Manage Results
+                            </Link>
+                        )}
+
                 </div>
             )}
 
@@ -239,6 +299,46 @@ const SidebarMenu = () => {
                     )}
                 </div>
             )}
+
+            {dropdownState.settings && (
+                <div className="flex flex-col">
+                    {hasRole(auth.user, "super-admin") && (
+                        <Link
+                            className="hover:bg-yellow-200 font-bold btn btn-blue rounded"
+                            href="/classes/create"
+                        >
+                            Add Class & Section Assign
+                        </Link>
+                    )}
+                </div>
+            )}
+
+            {dropdownState.settings && (
+                <div className="flex flex-col">
+                    {hasRole(auth.user, "super-admin") && (
+                        <Link
+                            className="hover:bg-yellow-200 font-bold btn btn-blue rounded"
+                            href="/class-subject"
+                        >
+                            Add Subject & Class Assign
+                        </Link>
+                    )}
+                </div>
+            )}
+
+            {dropdownState.settings && (
+                <div className="flex flex-col">
+                    {hasRole(auth.user, "super-admin") && (
+                        <Link
+                            className="hover:bg-yellow-200 font-bold btn btn-blue rounded"
+                            href="/class-fees"
+                        >
+                            Add Class Fee Assign
+                        </Link>
+                    )}
+                </div>
+            )}
+
         </div>
     );
 };

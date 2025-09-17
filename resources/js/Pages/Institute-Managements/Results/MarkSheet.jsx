@@ -1,6 +1,7 @@
 import React, { useRef } from "react";
 import { Head } from "@inertiajs/react";
 import { useReactToPrint } from "react-to-print";
+import AdminDashboardLayout from "@/backend/Dashboard/AdminDashboardLayout";
 
 // গ্রেড বের করার হেল্পার ফাংশন
 const getGradeAndGPA = (marks, fullMark) => {
@@ -14,7 +15,7 @@ const getGradeAndGPA = (marks, fullMark) => {
     return { grade: "F", gpa: 0.0 };
 };
 
-export default function Marksheet({ student, exam, results, studentRank, allStudents }) {
+export default function Marksheet({ student, exam, results, studentRank, allStudents, auth }) {
     const componentRef = useRef();
 
     const handlePrint = useReactToPrint({
@@ -39,6 +40,14 @@ export default function Marksheet({ student, exam, results, studentRank, allStud
     );
 
     return (
+        <AdminDashboardLayout
+            user={auth.user}
+            header={
+                <h1 className="font-semibold text-xl text-gray-800 leading-tight">
+                    Mark Sheet Generate
+                </h1>
+            }
+        >
         <div className="max-w-4xl mx-auto">
             <Head title="Marksheet" />
 
@@ -113,5 +122,6 @@ export default function Marksheet({ student, exam, results, studentRank, allStud
                 </div>
             </div>
         </div>
+        </AdminDashboardLayout>
     );
 }

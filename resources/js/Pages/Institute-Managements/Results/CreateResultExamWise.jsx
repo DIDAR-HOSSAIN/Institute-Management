@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useForm, router } from "@inertiajs/react";
+import AdminDashboardLayout from "@/backend/Dashboard/AdminDashboardLayout";
 
-export default function ResultEntryForm({ classes, exams, subjects, students }) {
+export default function ResultEntryForm({ classes, exams, subjects, students, auth }) {
     const { data, setData, post } = useForm({
         exam_id: "",
         results: {}, // { student_id: { subject_id: marks } }
@@ -23,6 +24,14 @@ export default function ResultEntryForm({ classes, exams, subjects, students }) 
     };
 
     return (
+        <AdminDashboardLayout
+            user={auth.user}
+            header={
+                <h1 className="font-semibold text-xl text-gray-800 leading-tight">
+                    Manage Students
+                </h1>
+            }
+        >
         <div className="p-6 bg-white shadow rounded-lg">
             <h2 className="text-xl font-bold mb-4">Result Entry</h2>
 
@@ -93,5 +102,6 @@ export default function ResultEntryForm({ classes, exams, subjects, students }) 
                 </form>
             )}
         </div>
+    </AdminDashboardLayout>
     );
 }

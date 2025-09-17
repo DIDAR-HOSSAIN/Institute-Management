@@ -49,7 +49,8 @@ Route::resource('rosters', RosterController::class);
 
 //Student Admission
 Route::resource('students', StudentController::class);
-
+//subject Assign to class
+Route::resource('class-subject', ClassSubjectController::class);
 //add Class, add fee Name & Assign Fee to Class
 Route::resource('class-fees', ClassFeeController::class);
 Route::resource('classes', SchoolClassController::class);
@@ -58,31 +59,30 @@ Route::resource('class-schedule', ClassScheduleController::class);
 Route::resource('holidays', HolidayController::class);
 Route::resource('leaves', LeaveController::class);
 
-// সব ফি লিস্ট
+//Student Fee List
 Route::get('/student-fees', [StudentFeeController::class, 'index'])
     ->name('student-fees.index');
 
-
-// খালি ফর্ম
+//Student fee collection form
 Route::get('/student-fees/create', [StudentFeeController::class, 'create'])
     ->name('student-fees.create');
 
-// Student সার্চ দিয়ে ডাটা ফেচ
+//Student fee collection for existing data fetch
 Route::get('/student-fees/fetch/{studentId}', [StudentFeeController::class, 'fetch'])
     ->name('student-fees.fetch');
 
-// ফি স্টোর
+//Student fee collection store
 Route::post('/student-fees/store', [StudentFeeController::class, 'store'])
     ->name('student-fees.store');
 
 // Student Fee show route
 Route::get('/student-fees/{studentId}', [StudentFeeController::class, 'show'])->name('student-fees.show');
 
-// খালি ফর্ম
+//Student fee collection edit form
 Route::get('/student-fees/create/edit', [StudentFeeController::class, 'createEdit'])
     ->name('student-fees.create-edit');
 
-// Student সার্চ দিয়ে ডাটা ফেচ
+//Student fee collection id fetch
 Route::get('/student-fees/fetch-edit/{studentId}', [StudentFeeController::class, 'fetchEdit'])
     ->name('student-fees.fetch-edit');
 

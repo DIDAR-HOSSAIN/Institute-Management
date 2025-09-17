@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useForm } from "@inertiajs/react";
 import axios from "axios";
+import AdminDashboardLayout from "@/backend/Dashboard/AdminDashboardLayout";
 
 export default function EditStudentFee({
     student,
@@ -8,7 +9,8 @@ export default function EditStudentFee({
     studentFees = [],
     paidTuitionMonths = [],
     paidExams = [],
-    admissionPaid = false
+    admissionPaid = false,
+    auth
 }) {
     const { data, setData, put } = useForm({
         student_id: student?.id || "",
@@ -123,6 +125,14 @@ export default function EditStudentFee({
     const checkboxStyle = (isPaid) => isPaid ? "text-gray-400" : "text-black";
 
     return (
+        <AdminDashboardLayout
+            user={auth.user}
+            header={
+                <h1 className="font-semibold text-xl text-gray-800 leading-tight">
+                    Manage Students
+                </h1>
+            }
+        >
         <div className="max-w-4xl mx-auto p-6 bg-white rounded-xl shadow-md">
             <h2 className="text-xl font-bold mb-4">💰 Edit Student Fee</h2>
 
@@ -211,5 +221,6 @@ export default function EditStudentFee({
                 <p className="text-gray-600">🔍 Please search by Student ID to continue.</p>
             )}
         </div>
+    </AdminDashboardLayout>
     );
 }

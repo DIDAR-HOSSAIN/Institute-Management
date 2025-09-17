@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useForm, usePage, Link } from '@inertiajs/react';
+import AdminDashboardLayout from '@/backend/Dashboard/AdminDashboardLayout';
 
 const EditStudent = () => {
-    const { student, classes, flash } = usePage().props;
+    const { student, classes, auth, flash } = usePage().props;
 
     const { data, setData, put, processing, errors } = useForm({
         student_name: student.student_name || '',
@@ -38,6 +39,14 @@ const EditStudent = () => {
     }
 
     return (
+        <AdminDashboardLayout
+            user={auth.user}
+            header={
+                <h1 className="font-semibold text-xl text-gray-800 leading-tight">
+                    Edit Student
+                </h1>
+            }
+        >
         <div className="max-w-3xl mx-auto p-4 bg-white rounded shadow">
             <div className="flex justify-between items-center mb-4">
                 <h1 className="text-xl font-semibold">Edit Student</h1>
@@ -115,6 +124,7 @@ const EditStudent = () => {
                 </div>
             </form>
         </div>
+        </AdminDashboardLayout>
     );
 };
 
