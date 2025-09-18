@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { router } from '@inertiajs/react';
 import { HiOutlineCheckCircle, HiOutlineExclamationTriangle } from 'react-icons/hi2';
 import { FaSpinner } from 'react-icons/fa';
+import AdminDashboardLayout from '@/backend/Dashboard/AdminDashboardLayout';
 
-const AttendanceSync = () => {
+const AttendanceSync = ({ auth }) => {
     const [status, setStatus] = useState(null);
     const [loading, setLoading] = useState(false);
 
@@ -37,6 +38,14 @@ const AttendanceSync = () => {
 
 
     return (
+        <AdminDashboardLayout
+            user={auth.user}
+            header={
+                <h1 className="font-semibold text-xl text-gray-800 leading-tight">
+                    Attendance Data Pull System
+                </h1>
+            }
+        >
         <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-100 to-indigo-100 px-4 py-8">
             <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md text-center">
                 <h1 className="text-3xl font-semibold text-gray-800 mb-2">Sync Attendance</h1>
@@ -75,6 +84,7 @@ const AttendanceSync = () => {
                 </button>
             </div>
         </div>
+        </AdminDashboardLayout>
     );
 };
 

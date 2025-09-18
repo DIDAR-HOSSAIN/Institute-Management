@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { usePage, router, Link } from "@inertiajs/react";
+import AdminDashboardLayout from "@/backend/Dashboard/AdminDashboardLayout";
 
 const ViewResult = () => {
     const { results, exams, filters, auth } = usePage().props;

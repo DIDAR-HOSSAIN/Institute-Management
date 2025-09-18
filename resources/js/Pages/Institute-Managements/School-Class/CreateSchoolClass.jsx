@@ -1,7 +1,8 @@
+import AdminDashboardLayout from '@/backend/Dashboard/AdminDashboardLayout';
 import { useForm, Link } from '@inertiajs/inertia-react';
 import React from 'react';
 
-const CreateClassAndSection = ({ classes }) => {
+const CreateClassAndSection = ({ classes, auth }) => {
     // ✅ Class Form
     const {
         data: classData,
@@ -37,6 +38,14 @@ const CreateClassAndSection = ({ classes }) => {
     }
 
     return (
+        <AdminDashboardLayout
+            user={auth.user}
+            header={
+                <h1 className="font-semibold text-xl text-gray-800 leading-tight">
+                    Add Class & Section
+                </h1>
+            }
+        >
         <div className="max-w-4xl mx-auto p-6 bg-white rounded shadow space-y-8">
             {/* Class Create */}
             <div>
@@ -167,6 +176,7 @@ const CreateClassAndSection = ({ classes }) => {
                 </div>
             </div>
         </div>
+        </AdminDashboardLayout>
     );
 };
 

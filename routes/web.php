@@ -63,6 +63,8 @@ Route::resource('leaves', LeaveController::class);
 Route::get('/student-fees', [StudentFeeController::class, 'index'])
     ->name('student-fees.index');
 
+Route::get('/money-receipt/{id}', [StudentFeeController::class, 'moneyReceipt'])->name('money.receipt');
+
 //Student fee collection form
 Route::get('/student-fees/create', [StudentFeeController::class, 'create'])
     ->name('student-fees.create');

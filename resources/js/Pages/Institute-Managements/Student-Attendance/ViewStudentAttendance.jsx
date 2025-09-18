@@ -1,7 +1,8 @@
 import React from "react";
 import { useForm, Link } from "@inertiajs/react";
+import AdminDashboardLayout from "@/backend/Dashboard/AdminDashboardLayout";
 
-const ViewStudentAttendance = ({ attendances, classes, sections, schedules, filters, summary }) => {
+const ViewStudentAttendance = ({ attendances, classes, sections, schedules, filters, summary, auth }) => {
     const { data, setData, get } = useForm({
         school_class_id: filters?.school_class_id || "",
         section_id: filters?.section_id || "",
@@ -32,6 +33,14 @@ const ViewStudentAttendance = ({ attendances, classes, sections, schedules, filt
 
 
     return (
+        <AdminDashboardLayout
+            user={auth.user}
+            header={
+                <h1 className="font-semibold text-xl text-gray-800 leading-tight">
+                    Student Attendance Management
+                </h1>
+            }
+        >
         <div className="p-4">
             <h1 className="text-2xl font-bold mb-4">📊 Attendance Report</h1>
 
@@ -143,6 +152,7 @@ const ViewStudentAttendance = ({ attendances, classes, sections, schedules, filt
                 ))}
             </div>
         </div>
+        </AdminDashboardLayout >
     );
 };
 

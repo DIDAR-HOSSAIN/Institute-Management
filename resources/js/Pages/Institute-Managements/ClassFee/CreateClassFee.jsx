@@ -1,7 +1,8 @@
 import React from "react";
 import { useForm, usePage, Link } from "@inertiajs/react";
+import AdminDashboardLayout from "@/backend/Dashboard/AdminDashboardLayout";
 
-export default function ClassFeeManager({ classes, fees, classFees }) {
+export default function ClassFeeManager({ classes, fees, classFees, auth }) {
     const { flash } = usePage().props;
 
     // --------- Form States ---------
@@ -26,6 +27,14 @@ export default function ClassFeeManager({ classes, fees, classFees }) {
     };
 
     return (
+        <AdminDashboardLayout
+            user={auth.user}
+            header={
+                <h1 className="font-semibold text-xl text-gray-800 leading-tight">
+                    Fee Assign
+                </h1>
+            }
+        >
         <div className="p-6 space-y-6">
             <h2 className="text-2xl font-bold text-center mb-6">🎓 Class Fee Management</h2>
 
@@ -169,5 +178,6 @@ export default function ClassFeeManager({ classes, fees, classFees }) {
                 </div>
             </div>
         </div>
+        </AdminDashboardLayout>
     );
 }

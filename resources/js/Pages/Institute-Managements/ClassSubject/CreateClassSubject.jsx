@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { useForm, router } from "@inertiajs/react";
+import AdminDashboardLayout from "@/backend/Dashboard/AdminDashboardLayout";
 
-export default function ClassSubjectIndex({ classes, subjects }) {
+export default function ClassSubjectIndex({ classes, subjects, auth }) {
 
     const [editSubject, setEditSubject] = useState(null);
 
@@ -63,6 +64,14 @@ export default function ClassSubjectIndex({ classes, subjects }) {
     };
 
     return (
+        <AdminDashboardLayout
+            user={auth.user}
+            header={
+                <h1 className="font-semibold text-xl text-gray-800 leading-tight">
+                    Subject & Class-Subject Management
+                </h1>
+            }
+        >
         <div className="max-w-5xl mx-auto p-6 bg-white shadow rounded space-y-8">
             <h2 className="text-2xl font-bold mb-4">Subject & Class-Subject Management</h2>
 
@@ -245,7 +254,7 @@ export default function ClassSubjectIndex({ classes, subjects }) {
                     ))}
                 </div>
             </div>
-
         </div>
+        </AdminDashboardLayout>
     );
 }

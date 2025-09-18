@@ -22,37 +22,37 @@ class SchoolClassController extends Controller
 }
 
 
-    public function storeClass(Request $request)
-    {
-        $request->validate(['name' => 'required']);
-        SchoolClass::create($request->only('name'));
-        return back()->with('success', 'Class created successfully');
-    }
+    // public function storeClass(Request $request)
+    // {
+    //     $request->validate(['name' => 'required']);
+    //     SchoolClass::create($request->only('name'));
+    //     return back()->with('success', 'Class created successfully');
+    // }
 
-    public function storeSection(Request $request)
-    {
-        $request->validate([
-            'school_class_id' => 'required|exists:school_classes,id',
-            'name' => 'required'
-        ]);
-        Section::create($request->only('school_class_id', 'name'));
-        return back()->with('success', 'Section created successfully');
-    }
+    // public function storeSection(Request $request)
+    // {
+    //     $request->validate([
+    //         'school_class_id' => 'required|exists:school_classes,id',
+    //         'name' => 'required'
+    //     ]);
+    //     Section::create($request->only('school_class_id', 'name'));
+    //     return back()->with('success', 'Section created successfully');
+    // }
 
-    public function storeSchedule(Request $request)
-    {
-        $request->validate([
-            'school_class_id' => 'required|exists:school_classes,id',
-            'section_id' => 'required|exists:sections,id',
-            'subject' => 'required',
-            'teacher' => 'required',
-            'day' => 'required',
-            'start_time' => 'required',
-            'end_time' => 'required',
-        ]);
-        ClassSchedule::create($request->all());
-        return back()->with('success', 'Schedule created successfully');
-    }
+    // public function storeSchedule(Request $request)
+    // {
+    //     $request->validate([
+    //         'school_class_id' => 'required|exists:school_classes,id',
+    //         'section_id' => 'required|exists:sections,id',
+    //         'subject' => 'required',
+    //         'teacher' => 'required',
+    //         'day' => 'required',
+    //         'start_time' => 'required',
+    //         'end_time' => 'required',
+    //     ]);
+    //     ClassSchedule::create($request->all());
+    //     return back()->with('success', 'Schedule created successfully');
+    // }
 
     /**
      * Show the form for creating a new resource.
