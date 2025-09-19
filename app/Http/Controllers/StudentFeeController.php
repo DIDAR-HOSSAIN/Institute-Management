@@ -349,13 +349,22 @@ class StudentFeeController extends Controller
         //
     }
 
+    // public function moneyReceipt($studentFeeId)
+    // {
+    //     $studentFee = StudentFee::with(['student', 'payments'])->findOrFail($studentFeeId);
+
+    //     return Inertia::render('Institute-Managements/StudentFee/MoneyReceipt', [
+    //         'studentFee' => $studentFee
+    //     ]);
+    // }
+
     public function moneyReceipt($studentFeeId)
     {
-        $studentFee = StudentFee::with(['student', 'payments.classFee'])->findOrFail($studentFeeId);
+        $studentFee = StudentFee::with(['student.schoolClass', 'payments'])
+            ->findOrFail($studentFeeId);
 
         return Inertia::render('Institute-Managements/StudentFee/MoneyReceipt', [
             'studentFee' => $studentFee
         ]);
     }
-
 }
